@@ -1,0 +1,108 @@
+1. https://www.google.com
+2. http://example.com/path/to/resource?query=value#fragment
+3. https://images.unsplash.com/photo-1575936123452-b67c3203c357
+4. file:///home/user/document.txt
+5. https://user:password@example.com:8080/path
+6. http://192.168.1.1:8080
+7. https://www.example.com/path with spaces/file.html
+8. ftp://ftp.example.com/pub/file.zip
+9. https://www.example.com/index.php?id=1&name=test
+10. https://subdomain.example.co.uk/path
+11. https://www.example.com/path/to/image.jpg
+12. https://www.example.com:8443/secure
+13. http://localhost:3000
+14. https://www.example.com/path/to/file.pdf#page=10
+15. https://www.example.com/search?q=query+with+spaces
+16. https://www.example.com/path/to/file.html#section-2
+17. https://www.example.com/path/to/file.php?id=123&action=view
+18. https://www.example.com/path/to/file.html?param1=value1&param2=value2#fragment
+19. https://www.example.com/path/to/file.html?param=value with spaces
+20. https://www.example.com/path/to/file.html?param=value%20with%20encoded%20spaces
+21. https://www.example.com/path/to/file.html?param=value+with+plus+signs
+22. https://www.example.com/path/to/file.html?param=special@characters!
+23. https://www.example.com/path/to/file.html?param=special%40characters%21
+24. https://www.example.com/path/to/file.html?param=value&param=duplicate
+25. https://www.example.com/path/to/file.html?param=
+26. https://www.example.com/path/to/file.html?=value
+27. https://www.example.com/path/to/file.html?
+28. https://www.example.com/path/to/file.html#
+29. https://www.example.com/path/to/file.html#fragment1#fragment2
+30. https://www.example.com/path/to/file.html?param1=value1#fragment?param2=value2
+31. https://www.example.com/index.html#!hashbang
+32. https://www.example.com/path/to/file.html?param=value#fragment=value
+33. https://www.example.com/path/to/file.html?param=value&param2=value2#fragment
+34. https://www.example.com/path/to/file.html?param=value&param2=value2#fragment=value
+35. https://www.example.com/path/to/file.html?param=value&param2=value2#fragment?param3=value3
+36. https://www.example.com/path/to/file.html?param=value&param2=value2#fragment&param3=value3
+37. https://www.example.com/path/to/file.html?param=value&param2=value2#fragment#fragment2
+38. https://www.example.com/path/to/file.html?param=value&param2=value2#fragment/path
+39. https://www.example.com/path/to/file.html?param=value&param2=value2#fragment?param3=value3&param4=value4
+40. https://www.example.com/path/to/file.html?param=value&param2=value2#fragment&param3=value3&param4=value4
+41. data:text/html,<h1>Hello World</h1>
+42. data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==
+43. javascript:alert('XSS')
+44. mailto:user@example.com
+45. tel:+1-234-567-8901
+46. sms:+1-234-567-8901?body=Hello
+47. https://www.example.com/path/to/file.html?param=<script>alert('XSS')</script>
+48. https://www.example.com/path/to/file.html?param=<img src="x" onerror="alert('XSS')">
+49. https://www.example.com/path/to/file.html?param=javascript:alert('XSS')
+50. https://www.example.com/path/to/file.html?param=data:text/html,<script>alert('XSS')</script>
+51. https://www.example.com/path/to/file.html?param=data:image/svg+xml,<svg onload="alert('XSS')">
+52. https://www.example.com/path/to/file.html?param=<iframe src="javascript:alert('XSS')">
+53. https://www.example.com/path/to/file.html?param=<a href="javascript:alert('XSS')">Click me</a>
+54. https://www.example.com/path/to/file.html?param=<img src="x" onerror="alert('XSS')">
+55. https://www.example.com/path/to/file.html?param=<svg><script>alert('XSS')</script></svg>
+56. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+57. https://www.example.com/path/to/file.html?param=<img src="x" onerror="alert('XSS')">
+58. https://www.example.com/path/to/file.html?param=<body onload="alert('XSS')">
+59. https://www.example.com/path/to/file.html?param=<input autofocus onfocus="alert('XSS')">
+60. https://www.example.com/path/to/file.html?param=<video src="x" onerror="alert('XSS')">
+61. https://www.example.com/path/to/file.html?param=<audio src="x" onerror="alert('XSS')">
+62. https://www.example.com/path/to/file.html?param=<iframe srcdoc="<script>alert('XSS')</script>">
+63. https://www.example.com/path/to/file.html?param=<math><maction actiontype="statusline#" xlink:href="javascript:alert('XSS')">Click
+64. https://www.example.com/path/to/file.html?param=<form action="javascript:alert('XSS')"><input type="submit">
+65. https://www.example.com/path/to/file.html?param=<isindex action="javascript:alert('XSS')" type="image">
+66. https://www.example.com/path/to/file.html?param=<object data="javascript:alert('XSS')">
+67. https://www.example.com/path/to/file.html?param=<embed src="javascript:alert('XSS')">
+68. https://www.example.com/path/to/file.html?param=<svg><script>alert('XSS')</script>
+69. https://www.example.com/path/to/file.html?param=<marquee onstart="alert('XSS')">
+70. https://www.example.com/path/to/file.html?param=<div style="background-image: url(javascript:alert('XSS'))">
+71. https://www.example.com/path/to/file.html?param=<link rel="stylesheet" href="javascript:alert('XSS')">
+72. https://www.example.com/path/to/file.html?param=<table background="javascript:alert('XSS')">
+73. https://www.example.com/path/to/file.html?param=<div style="width: expression(alert('XSS'))">
+74. https://www.example.com/path/to/file.html?param=<style>@import "javascript:alert('XSS')";</style>
+75. https://www.example.com/path/to/file.html?param=<meta http-equiv="refresh" content="0;url=javascript:alert('XSS')">
+76. https://www.example.com/path/to/file.html?param=<iframe src="data:text/html,<script>alert('XSS')</script>">
+77. https://www.example.com/path/to/file.html?param=<svg><set attributeName="onload" to="alert('XSS')" />
+78. https://www.example.com/path/to/file.html?param=<script>alert('XSS')</script>
+79. https://www.example.com/path/to/file.html?param=<img src="x" onerror="alert('XSS')">
+80. https://www.example.com/path/to/file.html?param=<svg><animate xlink:href="#xss" attributeName="href" values="javascript:alert('XSS')" />
+81. https://www.example.com/path/to/file.html?param=<svg><a><animate attributeName="href" values="javascript:alert('XSS')" />
+82. https://www.example.com/path/to/file.html?param=<svg><a xlink:href="javascript:alert('XSS')"><text x="20" y="20">XSS</text></a>
+83. https://www.example.com/path/to/file.html?param=<svg><a><animate attributeName="href" values="javascript:alert('XSS')" /><text x="20" y="20">XSS</text></a>
+84. https://www.example.com/path/to/file.html?param=<svg><discard onbegin="alert('XSS')" />
+85. https://www.example.com/path/to/file.html?param=<svg><script>alert('XSS')</script></svg>
+86. https://www.example.com/path/to/file.html?param=<svg><script>alert('XSS')</script>
+87. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+88. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+89. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+90. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+91. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+92. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+93. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+94. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+95. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+96. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+97. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+98. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+99. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+100. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+101. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+102. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+103. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+104. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+105. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+106. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+107. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />
+108. https://www.example.com/path/to/file.html?param=<svg><animate onbegin="alert('XSS')" attributeName="x" />

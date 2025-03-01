@@ -1,0 +1,53 @@
+Working Image URLs
+
+jpg: https://yavuzceliker.github.io/sample-images/image-205.jpg
+webp: https://seenandheard.app/assets/img/face-2.webp
+svg: https://seenandheard.app/assets/img/logo-white.svg
+
+Looks like Image URL but is website
+
+site: https://github.com/google/pprof/blob/main/doc/images/webui/flame-multi.png
+png: https://raw.githubusercontent.com/google/pprof/refs/heads/main/doc/images/webui/flame-multi.png
+
+Gif:
+
+https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/01_Das_Sandberg-Modell.gif/750px-01_Das_Sandberg-Modell.gif
+
+Normal Working URLs for OG Embeds
+
+https://www.google.com
+https://www.blogger.com
+https://youtube.com
+https://linkedin.com
+https://support.google.com
+https://cloudflare.com
+https://microsoft.com
+https://apple.com
+https://en.wikipedia.org
+https://play.google.com
+https://wordpress.org
+
+Attack URLs & Unsupported Formats
+
+data:text/html,<h1>Hello World</h1>
+data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==
+javascript:alert('XSS')
+mailto:user@example.com
+tel:+1-234-567-8901
+sms:+1-234-567-8901?body=Hello
+https://www.example.com/path/to/file.html?param=<script>alert('XSS')</script>
+https://www.example.com/path/to/file.html?param=<img src="x" onerror="alert('XSS')">
+https://www.example.com/path/to/file.html?param=javascript:alert('XSS')
+https://www.example.com/path/to/file.html?param=data:text/html,<script>alert('XSS')</script>
+https://www.example.com/path/to/file.html?param=data:image/svg+xml,<svg onload="alert('XSS')">
+https://www.example.com/path/to/file.html?param=<iframe src="javascript:alert('XSS')">
+https://www.example.com/path/to/file.html?param=<a href="javascript:alert('XSS')">Click me</a>
+
+Broken & Weird Edge Cases
+
+https://tectum.io/blog/dex-tools/
+http://0.0.0.0:8025/img.png
+http://httpbin.org/#/ 
+https://snthonstcrgrfonhenth.com/nthshtf
+http://domain/.well-known/acme-challenge/token
+https://<strong>dextools</strong>.apiable.io/(Only

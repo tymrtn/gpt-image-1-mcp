@@ -1,0 +1,28 @@
+# Dependency directories
+node_modules/
+
+# Build output
+build/
+
+# Environment variables
+.env
+
+# Generated images
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# OS specific files
+.DS_Store
+Thumbs.db
