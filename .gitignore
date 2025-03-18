@@ -7,12 +7,6 @@ build/
 # Environment variables
 .env
 
-# Generated images
-*.png
-*.jpg
-*.jpeg
-*.webp
-
 # Logs
 logs
 *.log

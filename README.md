@@ -1,8 +1,6 @@
-<p align="center">
-  <img src="assets/dall-e-logo.png" alt="DALL-E MCP Logo" width="256" height="256">
-</p>
-
 # DALL-E MCP Server
+
+<img src="assets/dall-e-logo.png" alt="DALL-E MCP Logo" width="256" height="256">
 
 An MCP (Model Context Protocol) server for generating images using OpenAI's DALL-E API.
 
@@ -213,7 +211,7 @@ The project includes a script to generate test images for development and testin
 ```bash
 # Generate a test image in the assets directory
 npm run generate-test-image
-```
+  ```
 
 This will create a simple test image in the `assets` directory that can be used for testing the edit and variation features.
 
