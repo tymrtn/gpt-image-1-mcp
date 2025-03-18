@@ -47,29 +47,9 @@ Example usage with Cline:
 node build/index.js
 ```
 
-### Adding to MCP Settings
+### Configuration for Cline
 
-This is the standard way to configure the DALL-E MCP server for normal operation. The API key must be configured in your MCP settings file as described below:
-
-You can add the server to your MCP settings file in two ways:
-
-#### Automatic Setup
-
-Run the provided script to automatically add the server to your MCP settings:
-
-```bash
-# Set your OpenAI API key in the environment
-export OPENAI_API_KEY=your-api-key-here
-
-# Run the setup script
-npm run add-to-mcp
-```
-
-This will add the server to your MCP settings file with the appropriate configuration.
-
-#### Manual Setup
-
-Alternatively, you can manually add the server to your MCP settings file. An example configuration is provided in `mcp-settings-example.json`:
+Add the dall-e server to your Cline MCP settings file inside VSCode's settings (ex. ~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json):
 
 ```json
 {
@@ -91,7 +71,6 @@ Alternatively, you can manually add the server to your MCP settings file. An exa
 Make sure to:
 1. Replace `/path/to/dalle-mcp-server/build/index.js` with the actual path to the built index.js file
 2. Replace `your-api-key-here` with your OpenAI API key
-3. Set `SAVE_DIR` to the directory where you want to save generated images (optional)
 
 ### Available Tools
 
@@ -186,6 +165,25 @@ No parameters required.
 
 ## Development
 
+## Testing Configuration
+
+**Note: The following .env configuration is ONLY needed for running tests, not for normal operation.**
+
+If you're developing or running tests for this project, create a `.env` file in the root directory with your OpenAI API key:
+
+```
+# Required for TESTS ONLY: OpenAI API Key
+OPENAI_API_KEY=your-api-key-here
+
+# Optional: Default save directory for test images
+# If not specified, images will be saved to the current directory
+# SAVE_DIR=/path/to/save/directory
+```
+
+For normal operation with Cline, configure your API key in the MCP settings JSON as described in the "Adding to MCP Settings" section above.
+
+You can get your API key from [OpenAI's API Keys page](https://platform.openai.com/api-keys).
+
 ### Running Tests
 
 ```bash
@@ -218,22 +216,3 @@ This will create a simple test image in the `assets` directory that can be used 
 ## License
 
 MIT
-
-## Testing Configuration
-
-**Note: The following .env configuration is ONLY needed for running tests, not for normal operation.**
-
-If you're developing or running tests for this project, create a `.env` file in the root directory with your OpenAI API key:
-
-```
-# Required for TESTS ONLY: OpenAI API Key
-OPENAI_API_KEY=your-api-key-here
-
-# Optional: Default save directory for test images
-# If not specified, images will be saved to the current directory
-# SAVE_DIR=/path/to/save/directory
-```
-
-For normal operation with Cline, configure your API key in the MCP settings JSON as described in the "Adding to MCP Settings" section above.
-
-You can get your API key from [OpenAI's API Keys page](https://platform.openai.com/api-keys).
