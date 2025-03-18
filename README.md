@@ -54,7 +54,7 @@ Add the dall-e server to your Cline MCP settings file inside VSCode's settings (
 ```json
 {
   "mcpServers": {
-    "dalle": {
+    "dalle-mcp": {
       "command": "node",
       "args": ["/path/to/dalle-mcp-server/build/index.js"],
       "env": {
@@ -106,6 +106,8 @@ Parameters:
 #### edit_image
 
 Edit an existing image using DALL-E based on a text prompt.
+
+> **⚠️ Known Issue (March 18, 2025):** The DALL-E 2 image edit API currently has a bug where it sometimes ignores the prompt and returns the original image without any edits, even when using proper RGBA format images and masks. This issue has been reported in the [OpenAI community forum](https://community.openai.com/t/dall-e-2-image-edit-issue/668376/7). If you experience this issue, try using the `create_variation` tool instead, which seems to work more reliably.
 
 ```json
 {
