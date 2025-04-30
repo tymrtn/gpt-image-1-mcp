@@ -6,6 +6,14 @@ An MCP (Model Context Protocol) server for generating images using OpenAI's GPT-
 
 > **Note:** This is a fork of the original [DALL-E MCP Server](https://github.com/Garoth/dalle-mcp) by [Garoth](https://github.com/Garoth), refactored to exclusively support GPT-Image-1 and remove support for DALL-E 2 and DALL-E 3 models.
 
+## Key Features
+
+- Generate images from text descriptions using GPT-Image-1
+- Edit existing images based on prompts using GPT-Image-1
+- Generate images using existing images as input with GPT-Image-1
+- Edit multiple images together with GPT-Image-1
+- Customization options including size, quality, transparency, format
+
 ## Features
 
 - Generate images using GPT-Image-1
@@ -142,27 +150,6 @@ Parameters:
 - `n` (optional): Number of images to generate (1-10, default: 1)
 - `saveDir` (optional): Directory to save the edited images (default: current directory or SAVE_DIR from .env). **For Cline users:** Setting this to your current workspace directory is recommended for proper image display.
 - `fileName` (optional): Base filename for the edited images without extension (default: "gpt-image-edit-{timestamp}")
-
-#### create_variation
-
-Create variations of an existing image using GPT-Image-1.
-
-```json
-{
-  "imagePath": "/path/to/image.png",
-  "size": "1024x1024",
-  "n": 4,
-  "saveDir": "/path/to/save/directory",
-  "fileName": "image-variation"
-}
-```
-
-Parameters:
-- `imagePath` (required): Path to the image to create variations of
-- `size` (optional): Size of the generated image: "1024x1024", "1792x1024", "1024x1792", or "auto" (default: "auto")
-- `n` (optional): Number of variations to generate (1-10, default: 1)
-- `saveDir` (optional): Directory to save the variation images (default: current directory or SAVE_DIR from .env). **For Cline users:** Setting this to your current workspace directory is recommended for proper image display.
-- `fileName` (optional): Base filename for the variation images without extension (default: "gpt-image-variation-{timestamp}")
 
 #### image_to_image
 

@@ -7,7 +7,6 @@
 ## API Parameters
 - Required parameters:
   - Generate/Edit/Image-to-Image: prompt 
-  - Variation: imagePath
   - Multi-image edit: prompt, imagePaths
 - Available optional parameters:
   - size: "1024x1024", "1792x1024", "1024x1792", "auto" (default: "auto")
@@ -31,10 +30,9 @@
 ## Supported Features
 1. Text-to-image generation (generate_image)
 2. Image editing with mask (edit_image)
-3. Image variations (create_variation)
-4. Image-to-image transformation (image_to_image)
-5. Multi-image editing/combining (multi_image_edit)
-6. API key validation (validate_api_key)
+3. Image-to-image transformation (image_to_image)
+4. Multi-image editing/combining (multi_image_edit)
+5. API key validation (validate_api_key)
 
 ## API Usage
 - API requests use b64_json response format to retrieve image data

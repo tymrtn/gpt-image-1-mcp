@@ -12,7 +12,7 @@ import {
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
 import { tools, listTools } from "./tools/index.js";
-import { Tool, ToolResponse, GenerateImageArgs, EditImageArgs, VariationArgs, ImageToImageArgs, MultiImageEditArgs, ValidateKeyArgs } from "./types/index.js";
+import { Tool, ToolResponse, GenerateImageArgs, EditImageArgs, ImageToImageArgs, MultiImageEditArgs, ValidateKeyArgs } from "./types/index.js";
 
 // Initialize MCP server
 const server = new Server(
@@ -25,7 +25,6 @@ const server = new Server(
       tools: {
         generate_image: true,
         edit_image: true,
-        create_variation: true,
         image_to_image: true,
         multi_image_edit: true,
         validate_api_key: true
@@ -80,9 +79,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request, _extra) => {
         break;
       case 'edit_image':
         response = await (tool as Tool<EditImageArgs>).handler(args as unknown as EditImageArgs);
-        break;
-      case 'create_variation':
-        response = await (tool as Tool<VariationArgs>).handler(args as unknown as VariationArgs);
         break;
       case 'image_to_image':
         response = await (tool as Tool<ImageToImageArgs>).handler(args as unknown as ImageToImageArgs);

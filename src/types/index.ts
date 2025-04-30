@@ -36,14 +36,6 @@ export interface EditImageArgs {
   fileName?: string;
 }
 
-export interface VariationArgs {
-  imagePath: string;
-  size?: string;
-  n?: number;
-  saveDir?: string;
-  fileName?: string;
-}
-
 export interface ImageToImageArgs {
   imagePath: string;
   prompt: string;
@@ -60,7 +52,7 @@ export interface ImageToImageArgs {
 
 export interface ValidateKeyArgs {}
 
-export type ToolArgs = GenerateImageArgs | EditImageArgs | VariationArgs | ImageToImageArgs | ValidateKeyArgs;
+export type ToolArgs = GenerateImageArgs | EditImageArgs | ImageToImageArgs | ValidateKeyArgs;
 
 export interface Tool<T = any> {
   name: string;

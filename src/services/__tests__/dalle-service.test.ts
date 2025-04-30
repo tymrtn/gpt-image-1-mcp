@@ -148,48 +148,44 @@ describe('DalleService Integration Tests', () => {
     });
   });
   
-  (RUN_ALL_TESTS ? describe : describe.skip)('createVariation', () => {
-    let testImagePath: string;
-    
-    beforeEach(async () => {
-      // Use a pre-generated test image from assets if available
-      const assetImagePath = path.resolve(process.cwd(), 'assets/test-image.png');
-      
-      if (await fs.pathExists(assetImagePath)) {
-        // Copy the test image to the temp directory
-        const tempImagePath = path.join(tempDir, 'test-image.png');
-        await fs.copyFile(assetImagePath, tempImagePath);
-        testImagePath = tempImagePath;
-      } else {
-        // Generate a test image for variations
-        const genResult = await service.generateImage('A simple geometric shape', {
-          model: 'dall-e-2', // Use DALL-E 2 for variations
-          fileName: 'test-shape-original'
-        });
-        
-        testImagePath = genResult.imagePaths![0];
-      }
-    });
-    
-    it('should create variations of an image', async () => {
-      const result = await service.createVariation(
-        testImagePath,
-        { 
-          n: 2,
-          fileName: 'test-shape-variation'
-        }
-      );
-      
-      expect(result.success).toBe(true);
-      expect(result.error).toBeUndefined();
-      expect(result.imagePaths).toBeDefined();
-      expect(result.imagePaths?.length).toBe(2);
-      
-      // Verify variation image files exist
-      for (const imagePath of result.imagePaths!) {
-        expect(await fs.pathExists(imagePath)).toBe(true);
-        expect(imagePath).toContain('test-shape-variation');
-      }
-    });
-  });
+  // Variations are not supported by GPT-Image-1, commenting out test
+  // (RUN_ALL_TESTS ? describe : describe.skip)('createVariation', () => {
+  //   let tempFilePath: string;
+  // 
+  //   beforeAll(async () => {
+  //     const testDirPath = path.join(__dirname, '../../../assets');
+  //     await fs.ensureDir(testDirPath);
+  // 
+  //     // Generate a test image for variations
+  //     const result = await service.generateImage('A simple blue shape on a white background', {
+  //       model: 'dall-e-2', // Use DALL-E 2 for variations
+  //       fileName: 'test-shape'
+  //     });
+  // 
+  //     if (!result.success || !result.imagePaths || result.imagePaths.length === 0) {
+  //       throw new Error('Failed to generate test image for variations');
+  //     }
+  // 
+  //     tempFilePath = result.imagePaths[0];
+  //   });
+  // 
+  //   it('should create variations of an image', async () => {
+  //     const result = await service.createVariation(
+  //       tempFilePath,
+  //       {
+  //         n: 1,
+  //         fileName: 'test-shape-variation'
+  //       }
+  //     );
+  // 
+  //     expect(result.success).toBe(true);
+  //     expect(result.imagePaths).toBeDefined();
+  //     expect(result.imagePaths?.length).toBe(1);
+  // 
+  //     // Verify variation image files exist
+  //     const imagePath = result.imagePaths![0];
+  //     expect(fs.existsSync(imagePath)).toBe(true);
+  //     expect(imagePath).toContain('test-shape-variation');
+  //   });
+  // }, 30000);
 });

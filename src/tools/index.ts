@@ -1,21 +1,21 @@
+import path from 'path';
 import { DalleService } from '../services/dalle-service.js';
-import { 
-  GenerateImageArgs, 
-  EditImageArgs, 
-  VariationArgs, 
+import {
+  GenerateImageArgs,
+  EditImageArgs,
   ImageToImageArgs,
   MultiImageEditArgs,
-  ValidateKeyArgs, 
-  ToolResponse 
+  ValidateKeyArgs,
+  ToolResponse,
+  Tool
 } from '../types/index.js';
-import path from 'path';
 
 // Initialize service
 const dalleService = new DalleService({
   apiKey: process.env.OPENAI_API_KEY || ''
 });
 
-export const tools = [
+export const tools: Tool[] = [
   {
     name: "multi_image_edit",
     description: "Edit multiple images together using GPT-Image-1",
@@ -497,81 +497,6 @@ export const tools = [
       }
       
       responseText += `Edited image${imageCount !== 1 ? 's' : ''} saved to:\n`;
-      
-      imagePaths.forEach(imagePath => {
-        responseText += `- ${imagePath}\n`;
-      });
-
-      return {
-        content: [{
-          type: "text",
-          text: responseText
-        }]
-      };
-    }
-  },
-  {
-    name: "create_variation",
-    description: "Create variations of an existing image using GPT-Image-1",
-    inputSchema: {
-      type: "object",
-      properties: {
-        imagePath: {
-          type: "string",
-          description: "Path to the image to create variations of"
-        },
-        size: {
-          type: "string",
-          description: "Size of the generated image",
-          enum: ["1024x1024", "1792x1024", "1024x1792", "auto"]
-        },
-        n: {
-          type: "number",
-          description: "Number of variations to generate (1-10)",
-          minimum: 1,
-          maximum: 10
-        },
-        saveDir: {
-          type: "string",
-          description: "Directory to save the generated images"
-        },
-        fileName: {
-          type: "string",
-          description: "Base filename for the variation images (without extension)"
-        }
-      },
-      required: ["imagePath"]
-    },
-    handler: async (args: VariationArgs): Promise<ToolResponse> => {
-      // Resolve relative path to absolute path
-      const imagePath = path.isAbsolute(args.imagePath) 
-        ? args.imagePath 
-        : path.resolve(process.cwd(), args.imagePath);
-
-      const result = await dalleService.createVariation(imagePath, {
-        size: args.size,
-        n: args.n,
-        saveDir: args.saveDir,
-        fileName: args.fileName
-      });
-
-      if (!result.success) {
-        return {
-          content: [{
-            type: "text",
-            text: `Error creating variations: ${result.error}`
-          }]
-        };
-      }
-
-      const imagePaths = result.imagePaths || [];
-      const imageCount = imagePaths.length;
-      const model = 'gpt-image-1';
-
-      let responseText = `Successfully created ${imageCount} variation${imageCount !== 1 ? 's' : ''} using ${model}.\n\n`;
-      responseText += `Original image: ${imagePath}\n\n`;
-      
-      responseText += `Variation${imageCount !== 1 ? 's' : ''} saved to:\n`;
       
       imagePaths.forEach(imagePath => {
         responseText += `- ${imagePath}\n`;
