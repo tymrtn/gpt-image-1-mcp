@@ -16,7 +16,8 @@ export class DalleService {
   constructor(config: DalleServiceConfig) {
     this.config = {
       apiKey: config.apiKey || process.env.OPENAI_API_KEY || '',
-      defaultSaveDir: config.defaultSaveDir || process.env.SAVE_DIR || process.cwd()
+      // Always default to project cwd if not explicitly provided
+      defaultSaveDir: config.defaultSaveDir || process.cwd()
     };
   }
 
@@ -41,11 +42,13 @@ export class DalleService {
       fileName?: string;
     } = {}
   ): Promise<ImageGenerationResult> {
+    let debugData: any = null;
     try {
       // Set default options
       const model = 'gpt-image-1'; // Only support GPT-Image-1
       const n = options.n || 1;
-      const saveDir = options.saveDir || this.config.defaultSaveDir || process.cwd();
+      const baseDir = this.config.defaultSaveDir || process.cwd();
+      const saveDir = options.saveDir ? path.resolve(baseDir, options.saveDir) : baseDir;
       const fileName = options.fileName || `gpt-image-${Date.now()}`;
       const output_format = options.output_format || 'png';
 
@@ -59,8 +62,7 @@ export class DalleService {
       const requestParams: any = {
         model,
         prompt,
-        n,
-        response_format: 'b64_json'
+        n
       };
       
       // Valid sizes for GPT-Image-1
@@ -97,26 +99,79 @@ export class DalleService {
       
       console.log("DEBUG - gpt-image-1 requestParams:", JSON.stringify(requestParams, null, 2));
     
-      // Make the API request
-      const response = await axios.post(
-        `${this.baseUrl}/images/generations`,
-        requestParams,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.config.apiKey}`
-          }
+      // Make the API request - Use the correct API endpoint
+    const response = await axios.post(
+      `${this.baseUrl}/images/generations`,
+      requestParams,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.config.apiKey}`
         }
-      );
+      }
+    );
+    debugData = response.data;
 
-      // Process response
+    // Process response - Add extensive logging
       const data = response.data;
+      console.log("DEBUG - Full API Response Structure:", JSON.stringify(data, null, 2));
+      console.log("DEBUG - Response Type:", typeof data);
+      console.log("DEBUG - Response Keys:", Object.keys(data));
+      
       const imagePaths: string[] = [];
 
-      // Save each image
+      // Check if data structure is as expected
+      if (!data.data || !Array.isArray(data.data) || data.data.length === 0) {
+        console.error("DEBUG - Unexpected response structure:", data);
+        throw new Error("Unexpected API response structure. Missing or empty data array.");
+      }
+
+      // Save each image with careful validation
       for (let i = 0; i < data.data.length; i++) {
         const item = data.data[i];
-        const imageBuffer = Buffer.from(item.b64_json, 'base64');
+        // Handle URL-based responses
+        if (item.url) {
+          console.log("DEBUG - Found url field, downloading image from URL");
+          const urlResponse = await axios.get(item.url, { responseType: 'arraybuffer' });
+          const buffer = Buffer.from(urlResponse.data);
+          let imagePath = path.join(saveDir, `${fileName}${n > 1 ? `-${i + 1}` : ''}.${output_format}`);
+          if (!path.isAbsolute(imagePath)) {
+            imagePath = path.resolve(process.cwd(), imagePath);
+          }
+          await fs.writeFile(imagePath, buffer);
+          imagePaths.push(imagePath);
+          continue;
+        }
+        console.log(`DEBUG - Image item ${i}:`, JSON.stringify(item, null, 2));
+        console.log(`DEBUG - Item type:`, typeof item);
+        console.log(`DEBUG - Item keys:`, Object.keys(item));
+        
+        // Try to find image data in various formats OpenAI might return
+        let base64Data = null;
+        if (item.b64_json) {
+          console.log("DEBUG - Found b64_json field");
+          base64Data = item.b64_json;
+        } else if (item.image) {
+          console.log("DEBUG - Found image field");
+          base64Data = item.image;
+        } else if (item.url) {
+          console.log("DEBUG - Found url field (cannot process directly)");
+          throw new Error("API returned URL instead of base64 data. Update code to handle URL responses.");
+        } else {
+          console.error("DEBUG - No recognizable image data in item:", item);
+          throw new Error("Image data not found in expected formats in API response");
+        }
+        
+        if (!base64Data) {
+          console.error("DEBUG - Base64 data is null or empty");
+          throw new Error("Base64 image data is empty");
+        }
+        
+        console.log("DEBUG - Base64 data type:", typeof base64Data);
+        console.log("DEBUG - Base64 data length:", base64Data.length);
+        console.log("DEBUG - Base64 data preview:", base64Data.substring(0, 50) + "...");
+        
+        const imageBuffer = Buffer.from(base64Data, 'base64');
         let imagePath = path.join(saveDir, `${fileName}${n > 1 ? `-${i + 1}` : ''}.${output_format}`);
         
         // Ensure the path is absolute
@@ -144,6 +199,7 @@ export class DalleService {
         usage
       };
     } catch (error) {
+      console.log("DEBUG - Response Data:", debugData);
       console.log("GPT-Image API Error:", error);
       
       let errorMessage = 'Failed to generate image';
@@ -153,6 +209,9 @@ export class DalleService {
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
+      
+      // Include debug response data in the error message
+      errorMessage += `\nDEBUG_RESPONSE_DATA: ${JSON.stringify(debugData, null, 2)}`;
       
       return {
         success: false,
@@ -244,7 +303,6 @@ export class DalleService {
         formData.append('output_compression', output_compression.toString());
       }
       
-      formData.append('response_format', 'b64_json');
 
       // Read image file and append to form
       const imageBuffer = await fs.readFile(imagePath);
@@ -281,7 +339,7 @@ export class DalleService {
       // Save each image
       for (let i = 0; i < data.data.length; i++) {
         const item = data.data[i];
-        const resultBuffer = Buffer.from(item.b64_json, 'base64');
+        const resultBuffer = Buffer.from(item.image, 'base64');
         let resultPath = path.join(saveDir, `${fileName}${n > 1 ? `-${i + 1}` : ''}.${output_format || 'png'}`);
         
         // Ensure the path is absolute
@@ -391,7 +449,6 @@ export class DalleService {
         formData.append('output_compression', output_compression.toString());
       }
       
-      formData.append('response_format', 'b64_json');
 
       // Read image file and append to form
       const imageBuffer = await fs.readFile(imagePath);
@@ -402,7 +459,7 @@ export class DalleService {
 
       // Make request to OpenAI API
       const response = await axios.post(
-        `${this.baseUrl}/images`,
+        `${this.baseUrl}/images/edits`,
         formData,
         {
           headers: {
@@ -419,7 +476,7 @@ export class DalleService {
       // Save each image
       for (let i = 0; i < data.data.length; i++) {
         const item = data.data[i];
-        const resultBuffer = Buffer.from(item.b64_json, 'base64');
+        const resultBuffer = Buffer.from(item.image, 'base64');
         let resultPath = path.join(saveDir, `${fileName}${n > 1 ? `-${i + 1}` : ''}.${output_format || 'png'}`);
         
         // Ensure the path is absolute
@@ -531,7 +588,6 @@ export class DalleService {
         formData.append('output_compression', output_compression.toString());
       }
       
-      formData.append('response_format', 'b64_json');
 
       // Read and append all image files to form
       for (const imagePath of imagePaths) {
@@ -561,7 +617,7 @@ export class DalleService {
       // Save each image
       for (let i = 0; i < data.data.length; i++) {
         const item = data.data[i];
-        const resultBuffer = Buffer.from(item.b64_json, 'base64');
+        const resultBuffer = Buffer.from(item.image, 'base64');
         let resultPath = path.join(saveDir, `${fileName}${n > 1 ? `-${i + 1}` : ''}.${output_format || 'png'}`);
         
         // Ensure the path is absolute

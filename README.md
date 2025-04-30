@@ -27,8 +27,8 @@ An MCP (Model Context Protocol) server for generating images using OpenAI's GPT-
 
 ```bash
 # Clone the repository
-git clone https://github.com/Garoth/dalle-mcp.git
-cd dalle-mcp
+git clone https://github.com/tymrtn/gpt-image-1-mcp.git
+cd gpt-image-1-mcp
 
 # Install dependencies
 npm install
@@ -36,6 +36,8 @@ npm install
 # Build the project
 npm run build
 ```
+
+> **Important:** The installation with `npm install` will automatically build the project. If you're cloning from GitHub, your directory structure may include additional subdirectories (like `github.com/tymrtn/` in the path). Make sure to use the correct full path when configuring the MCP server in your settings.
 
 ## Important Note for Cline Users
 
@@ -55,34 +57,55 @@ Example usage with Cline:
 ### Running the Server
 
 ```bash
-# Run the server
-node build/index.js
+# Generate a test image in the `assets` directory
+npm run generate-test-image
+```
+
+By default, this script saves images to the `assets` directory. When generating images in a different folder (e.g., `test`), ensure the directory exists or provide an absolute path via `--saveDir`. For example:
+
+```bash
+npm run generate-test-image -- --saveDir /full/path/to/project/test
 ```
 
 ### Configuration for Cline
 
-Add the GPT-Image server to your Cline MCP settings file inside VSCode's settings (ex. ~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json):
+Add the GPT-Image server to your Cline MCP settings file inside your editor's settings (locations vary by editor):
+
+- VSCode: `~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
+- Cursor: `~/Library/Application Support/Cursor/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` (macOS)
+- Cursor: `%APPDATA%\Cursor\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json` (Windows)
 
 ```json
 {
   "mcpServers": {
-    "gpt-image-mcp": {
+    "github.com/tymrtn/gpt-image-1-mcp": {
       "command": "node",
-      "args": ["/path/to/gpt-image-mcp-server/build/index.js"],
+      "args": ["/FULL/PATH/TO/gpt-image-1-mcp/build/index.js"],
       "env": {
         "OPENAI_API_KEY": "your-api-key-here",
         "SAVE_DIR": "/path/to/save/directory"
       },
       "disabled": false,
-      "autoApprove": []
+      "autoApprove": [
+        "generate_image",
+        "validate_key",
+        "edit_image",
+        "multi_image_edit"
+      ],
+      "transportType": "stdio"
     }
   }
 }
 ```
 
 Make sure to:
-1. Replace `/path/to/gpt-image-mcp-server/build/index.js` with the actual path to the built index.js file
+1. Replace `/FULL/PATH/TO/gpt-image-1-mcp/build/index.js` with the **exact** full path to the built index.js file
+   - ⚠️ Verify this path carefully! If you cloned from GitHub or a fork, the path may include additional subdirectories
+   - You can find the correct path by running `pwd` in your terminal when in the project directory, then append `/build/index.js`
 2. Replace `your-api-key-here` with your OpenAI API key
+3. Include `"transportType": "stdio"` as shown in the example
+
+> **Troubleshooting Tip:** If you encounter a "MODULE_NOT_FOUND" error, verify that your path in the MCP settings exactly matches the location where you cloned and built the server.
 
 ### Available Tools
 
