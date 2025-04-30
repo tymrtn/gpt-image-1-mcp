@@ -21,7 +21,7 @@ export class DalleService {
   }
 
   /**
-   * Generate images using DALL-E
+   * Generate images using GPT-Image-1
    * @param prompt Text description of the desired image
    * @param options Generation options
    * @returns Result with paths to saved images
@@ -32,7 +32,10 @@ export class DalleService {
       model?: string;
       size?: string;
       quality?: string;
-      style?: string;
+      background?: string;
+      moderation?: string;
+      output_format?: string;
+      output_compression?: number;
       n?: number;
       saveDir?: string;
       fileName?: string;
@@ -40,29 +43,64 @@ export class DalleService {
   ): Promise<ImageGenerationResult> {
     try {
       // Set default options
-      const model = options.model || 'dall-e-3';
-      const size = options.size || '1024x1024';
-      const quality = options.quality || 'standard';
-      const style = options.style || 'vivid';
+      const model = 'gpt-image-1'; // Only support GPT-Image-1
       const n = options.n || 1;
       const saveDir = options.saveDir || this.config.defaultSaveDir || process.cwd();
-      const fileName = options.fileName || `dalle-${Date.now()}`;
+      const fileName = options.fileName || `gpt-image-${Date.now()}`;
+      const output_format = options.output_format || 'png';
+
+      // Print debug information
+      console.log("DEBUG - generateImage options:", JSON.stringify(options, null, 2));
 
       // Ensure save directory exists
       await fs.ensureDir(saveDir);
 
-      // Make request to OpenAI API
+      // Base request parameters
+      const requestParams: any = {
+        model,
+        prompt,
+        n,
+        response_format: 'b64_json'
+      };
+      
+      // Valid sizes for GPT-Image-1
+      const validSizes = ['1024x1024', '1792x1024', '1024x1792', 'auto'];
+      
+      // Size parameter (auto is default)
+      requestParams.size = validSizes.includes(options.size || '') ? options.size : 'auto';
+      
+      // Quality parameter (auto is default)
+      if (options.quality && ['auto', 'high', 'medium', 'low'].includes(options.quality)) {
+        requestParams.quality = options.quality;
+      }
+      
+      // Add other gpt-image-1 specific parameters
+      if (options.background && ['auto', 'transparent', 'opaque'].includes(options.background)) {
+        requestParams.background = options.background;
+      }
+      
+      if (options.moderation && ['auto', 'low'].includes(options.moderation)) {
+        requestParams.moderation = options.moderation;
+      }
+      
+      if (options.output_format && ['png', 'jpeg', 'webp'].includes(options.output_format)) {
+        requestParams.output_format = options.output_format;
+      }
+      
+      // Add compression for webp/jpeg
+      if ((output_format === 'webp' || output_format === 'jpeg') && 
+          typeof options.output_compression === 'number' && 
+          options.output_compression >= 0 && 
+          options.output_compression <= 100) {
+        requestParams.output_compression = options.output_compression;
+      }
+      
+      console.log("DEBUG - gpt-image-1 requestParams:", JSON.stringify(requestParams, null, 2));
+    
+      // Make the API request
       const response = await axios.post(
         `${this.baseUrl}/images/generations`,
-        {
-          model,
-          prompt,
-          n,
-          size,
-          quality,
-          style,
-          response_format: 'b64_json'
-        },
+        requestParams,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -79,7 +117,7 @@ export class DalleService {
       for (let i = 0; i < data.data.length; i++) {
         const item = data.data[i];
         const imageBuffer = Buffer.from(item.b64_json, 'base64');
-        let imagePath = path.join(saveDir, `${fileName}${n > 1 ? `-${i + 1}` : ''}.png`);
+        let imagePath = path.join(saveDir, `${fileName}${n > 1 ? `-${i + 1}` : ''}.${output_format}`);
         
         // Ensure the path is absolute
         if (!path.isAbsolute(imagePath)) {
@@ -90,19 +128,28 @@ export class DalleService {
         imagePaths.push(imagePath);
       }
 
+      // Extract token usage if available
+      const usage = data.usage ? {
+        total_tokens: data.usage.total_tokens,
+        input_tokens: data.usage.input_tokens,
+        output_tokens: data.usage.output_tokens,
+        input_tokens_details: data.usage.input_tokens_details
+      } : undefined;
+
       return {
         success: true,
         imagePaths,
         model,
-        prompt
+        prompt,
+        usage
       };
     } catch (error) {
-      console.log("DALL-E API Error:", error);
+      console.log("GPT-Image API Error:", error);
       
       let errorMessage = 'Failed to generate image';
       
       if (axios.isAxiosError(error) && error.response?.data?.error) {
-        errorMessage = `DALL-E API Error: ${error.response.data.error.message}`;
+        errorMessage = `GPT-Image API Error: ${error.response.data.error.message}`;
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
@@ -115,7 +162,7 @@ export class DalleService {
   }
 
   /**
-   * Edit an existing image using DALL-E
+   * Edit an existing image using GPT-Image-1
    * @param prompt Text description of the desired edits
    * @param imagePath Path to the image to edit
    * @param options Edit options
@@ -128,6 +175,11 @@ export class DalleService {
       mask?: string;
       model?: string;
       size?: string;
+      quality?: string;
+      background?: string;
+      moderation?: string;
+      output_format?: string;
+      output_compression?: number;
       n?: number;
       saveDir?: string;
       fileName?: string;
@@ -135,11 +187,16 @@ export class DalleService {
   ): Promise<ImageGenerationResult> {
     try {
       // Set default options
-      const model = options.model || 'dall-e-2'; // DALL-E 3 doesn't support image edits yet
-      const size = options.size || '1024x1024';
+      const model = 'gpt-image-1'; // Only support GPT-Image-1
+      const size = options.size || 'auto';
+      const quality = options.quality || 'auto';
+      const background = options.background || 'auto';
+      const moderation = options.moderation || 'auto';
+      const output_format = options.output_format || 'png';
+      const output_compression = options.output_compression || 100;
       const n = options.n || 1;
       const saveDir = options.saveDir || this.config.defaultSaveDir || process.cwd();
-      const fileName = options.fileName || `dalle-edit-${Date.now()}`;
+      const fileName = options.fileName || `gpt-image-edit-${Date.now()}`;
 
       // Ensure save directory exists
       await fs.ensureDir(saveDir);
@@ -163,8 +220,30 @@ export class DalleService {
       // Create form data
       const formData = new FormData();
       formData.append('prompt', prompt);
+      formData.append('model', model);
       formData.append('n', n.toString());
       formData.append('size', size);
+      
+      if (quality) {
+        formData.append('quality', quality);
+      }
+      
+      if (background) {
+        formData.append('background', background);
+      }
+      
+      if (moderation) {
+        formData.append('moderation', moderation);
+      }
+      
+      if (output_format) {
+        formData.append('output_format', output_format);
+      }
+      
+      if ((output_format === 'webp' || output_format === 'jpeg') && output_compression) {
+        formData.append('output_compression', output_compression.toString());
+      }
+      
       formData.append('response_format', 'b64_json');
 
       // Read image file and append to form
@@ -203,7 +282,7 @@ export class DalleService {
       for (let i = 0; i < data.data.length; i++) {
         const item = data.data[i];
         const resultBuffer = Buffer.from(item.b64_json, 'base64');
-        let resultPath = path.join(saveDir, `${fileName}${n > 1 ? `-${i + 1}` : ''}.png`);
+        let resultPath = path.join(saveDir, `${fileName}${n > 1 ? `-${i + 1}` : ''}.${output_format || 'png'}`);
         
         // Ensure the path is absolute
         if (!path.isAbsolute(resultPath)) {
@@ -221,12 +300,12 @@ export class DalleService {
         prompt
       };
     } catch (error) {
-      console.log("DALL-E API Error:", error);
+      console.log("GPT-Image API Error:", error);
       
       let errorMessage = 'Failed to edit image';
       
       if (axios.isAxiosError(error) && error.response?.data?.error) {
-        errorMessage = `DALL-E API Error: ${error.response.data.error.message}`;
+        errorMessage = `GPT-Image API Error: ${error.response.data.error.message}`;
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
@@ -256,11 +335,11 @@ export class DalleService {
   ): Promise<ImageGenerationResult> {
     try {
       // Set default options
-      const model = options.model || 'dall-e-2'; // DALL-E 3 doesn't support variations yet
-      const size = options.size || '1024x1024';
+      const model = 'gpt-image-1';
+      const size = options.size || 'auto';
       const n = options.n || 1;
       const saveDir = options.saveDir || this.config.defaultSaveDir || process.cwd();
-      const fileName = options.fileName || `dalle-variation-${Date.now()}`;
+      const fileName = options.fileName || `gpt-image-variation-${Date.now()}`;
 
       // Ensure save directory exists
       await fs.ensureDir(saveDir);
@@ -275,6 +354,7 @@ export class DalleService {
 
       // Create form data
       const formData = new FormData();
+      formData.append('model', model);
       formData.append('n', n.toString());
       formData.append('size', size);
       formData.append('response_format', 'b64_json');
@@ -323,12 +403,301 @@ export class DalleService {
         model
       };
     } catch (error) {
-      console.log("DALL-E API Error:", error);
+      console.log("GPT-Image API Error:", error);
       
       let errorMessage = 'Failed to create image variation';
       
       if (axios.isAxiosError(error) && error.response?.data?.error) {
-        errorMessage = `DALL-E API Error: ${error.response.data.error.message}`;
+        errorMessage = `GPT-Image API Error: ${error.response.data.error.message}`;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
+  }
+
+  /**
+   * Generate an image using an existing image as input (image-to-image)
+   * @param imagePath Path to the input image
+   * @param prompt Text description to guide the generation
+   * @param options Generation options
+   * @returns Result with paths to saved images
+   */
+  async imageToImage(
+    imagePath: string,
+    prompt: string,
+    options: {
+      model?: string;
+      size?: string;
+      quality?: string;
+      background?: string;
+      moderation?: string;
+      output_format?: string;
+      output_compression?: number;
+      n?: number;
+      saveDir?: string;
+      fileName?: string;
+    } = {}
+  ): Promise<ImageGenerationResult> {
+    try {
+      // Set default options
+      const model = 'gpt-image-1';
+      const size = options.size || 'auto';
+      const quality = options.quality || 'auto';
+      const background = options.background || 'auto';
+      const moderation = options.moderation || 'auto';
+      const output_format = options.output_format || 'png';
+      const output_compression = options.output_compression || 100;
+      const n = options.n || 1;
+      const saveDir = options.saveDir || this.config.defaultSaveDir || process.cwd();
+      const fileName = options.fileName || `gpt-img2img-${Date.now()}`;
+
+      // Ensure save directory exists
+      await fs.ensureDir(saveDir);
+
+      // Check if image exists
+      if (!await fs.pathExists(imagePath)) {
+        return {
+          success: false,
+          error: `Image file not found: ${imagePath}`
+        };
+      }
+
+      // Create form data
+      const formData = new FormData();
+      formData.append('prompt', prompt);
+      formData.append('model', model);
+      formData.append('n', n.toString());
+      formData.append('size', size);
+      
+      if (quality) {
+        formData.append('quality', quality);
+      }
+      
+      if (background) {
+        formData.append('background', background);
+      }
+      
+      if (moderation) {
+        formData.append('moderation', moderation);
+      }
+      
+      if (output_format) {
+        formData.append('output_format', output_format);
+      }
+      
+      if ((output_format === 'webp' || output_format === 'jpeg') && output_compression) {
+        formData.append('output_compression', output_compression.toString());
+      }
+      
+      formData.append('response_format', 'b64_json');
+
+      // Read image file and append to form
+      const imageBuffer = await fs.readFile(imagePath);
+      formData.append('image', imageBuffer, {
+        filename: path.basename(imagePath),
+        contentType: 'image/png'
+      });
+
+      // Make request to OpenAI API
+      const response = await axios.post(
+        `${this.baseUrl}/images`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${this.config.apiKey}`
+          }
+        }
+      );
+
+      // Process response
+      const data = response.data;
+      const imagePaths: string[] = [];
+
+      // Save each image
+      for (let i = 0; i < data.data.length; i++) {
+        const item = data.data[i];
+        const resultBuffer = Buffer.from(item.b64_json, 'base64');
+        let resultPath = path.join(saveDir, `${fileName}${n > 1 ? `-${i + 1}` : ''}.${output_format || 'png'}`);
+        
+        // Ensure the path is absolute
+        if (!path.isAbsolute(resultPath)) {
+          resultPath = path.resolve(process.cwd(), resultPath);
+        }
+        
+        await fs.writeFile(resultPath, resultBuffer);
+        imagePaths.push(resultPath);
+      }
+
+      return {
+        success: true,
+        imagePaths,
+        model,
+        prompt
+      };
+    } catch (error) {
+      console.log("GPT-Image API Error:", error);
+      
+      let errorMessage = 'Failed to generate image from input image';
+      
+      if (axios.isAxiosError(error) && error.response?.data?.error) {
+        errorMessage = `GPT-Image API Error: ${error.response.data.error.message}`;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
+  }
+
+  /**
+   * Edit multiple images using gpt-image-1 model
+   * @param prompt Text description to guide the generation
+   * @param imagePaths Array of paths to the input images
+   * @param options Edit options
+   * @returns Result with paths to saved images
+   */
+  async editMultipleImages(
+    prompt: string,
+    imagePaths: string[],
+    options: {
+      model?: string;
+      size?: string;
+      quality?: string;
+      background?: string;
+      moderation?: string;
+      output_format?: string;
+      output_compression?: number;
+      n?: number;
+      saveDir?: string;
+      fileName?: string;
+    } = {}
+  ): Promise<ImageGenerationResult> {
+    try {
+      // Set default options
+      const model = options.model || 'gpt-image-1';
+      const size = options.size || 'auto';
+      const quality = options.quality || 'auto';
+      const background = options.background || 'auto';
+      const moderation = options.moderation || 'auto';
+      const output_format = options.output_format || 'png';
+      const output_compression = options.output_compression || 100;
+      const n = options.n || 1;
+      const saveDir = options.saveDir || this.config.defaultSaveDir || process.cwd();
+      const fileName = options.fileName || `image-edit-${Date.now()}`;
+
+      // Ensure save directory exists
+      await fs.ensureDir(saveDir);
+
+      // Check if all images exist
+      for (const imagePath of imagePaths) {
+        if (!await fs.pathExists(imagePath)) {
+          return {
+            success: false,
+            error: `Image file not found: ${imagePath}`
+          };
+        }
+      }
+
+      // Create form data
+      const formData = new FormData();
+      formData.append('prompt', prompt);
+      formData.append('model', model);
+      formData.append('n', n.toString());
+      formData.append('size', size);
+      
+      if (quality) {
+        formData.append('quality', quality);
+      }
+      
+      if (background) {
+        formData.append('background', background);
+      }
+      
+      if (moderation) {
+        formData.append('moderation', moderation);
+      }
+      
+      if (output_format) {
+        formData.append('output_format', output_format);
+      }
+      
+      if ((output_format === 'webp' || output_format === 'jpeg') && output_compression) {
+        formData.append('output_compression', output_compression.toString());
+      }
+      
+      formData.append('response_format', 'b64_json');
+
+      // Read and append all image files to form
+      for (const imagePath of imagePaths) {
+        const imageBuffer = await fs.readFile(imagePath);
+        formData.append('image[]', imageBuffer, {
+          filename: path.basename(imagePath),
+          contentType: 'image/png'
+        });
+      }
+
+      // Make request to OpenAI API
+      const response = await axios.post(
+        `${this.baseUrl}/images/edits`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${this.config.apiKey}`
+          }
+        }
+      );
+
+      // Process response
+      const data = response.data;
+      const resultImagePaths: string[] = [];
+
+      // Save each image
+      for (let i = 0; i < data.data.length; i++) {
+        const item = data.data[i];
+        const resultBuffer = Buffer.from(item.b64_json, 'base64');
+        let resultPath = path.join(saveDir, `${fileName}${n > 1 ? `-${i + 1}` : ''}.${output_format || 'png'}`);
+        
+        // Ensure the path is absolute
+        if (!path.isAbsolute(resultPath)) {
+          resultPath = path.resolve(process.cwd(), resultPath);
+        }
+        
+        await fs.writeFile(resultPath, resultBuffer);
+        resultImagePaths.push(resultPath);
+      }
+
+      // Extract token usage if available
+      const usage = data.usage ? {
+        total_tokens: data.usage.total_tokens,
+        input_tokens: data.usage.input_tokens,
+        output_tokens: data.usage.output_tokens,
+        input_tokens_details: data.usage.input_tokens_details
+      } : undefined;
+
+      return {
+        success: true,
+        imagePaths: resultImagePaths,
+        model,
+        prompt,
+        usage
+      };
+    } catch (error) {
+      console.log("GPT-Image API Error:", error);
+      
+      let errorMessage = 'Failed to edit multiple images';
+      
+      if (axios.isAxiosError(error) && error.response?.data?.error) {
+        errorMessage = `GPT-Image API Error: ${error.response.data.error.message}`;
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }

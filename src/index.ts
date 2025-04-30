@@ -11,13 +11,13 @@ import {
   ErrorCode,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
-import { tools } from "./tools/index.js";
-import { Tool, ToolResponse, GenerateImageArgs, EditImageArgs, VariationArgs, ValidateKeyArgs } from "./types/index.js";
+import { tools, listTools } from "./tools/index.js";
+import { Tool, ToolResponse, GenerateImageArgs, EditImageArgs, VariationArgs, ImageToImageArgs, MultiImageEditArgs, ValidateKeyArgs } from "./types/index.js";
 
 // Initialize MCP server
 const server = new Server(
   {
-    name: "dalle-image-generator",
+    name: "gpt-image-generator",
     version: "1.0.0",
   },
   {
@@ -26,7 +26,9 @@ const server = new Server(
         generate_image: true,
         edit_image: true,
         create_variation: true,
-        validate_key: true
+        image_to_image: true,
+        multi_image_edit: true,
+        validate_api_key: true
       },
     },
   }
@@ -35,13 +37,7 @@ const server = new Server(
 /**
  * Handler that lists available tools
  */
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: tools.map(tool => ({
-    name: tool.name,
-    description: tool.description,
-    inputSchema: tool.inputSchema
-  }))
-}));
+server.setRequestHandler(ListToolsRequestSchema, async () => listTools());
 
 /**
  * Handler for tool calls
@@ -88,7 +84,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request, _extra) => {
       case 'create_variation':
         response = await (tool as Tool<VariationArgs>).handler(args as unknown as VariationArgs);
         break;
-      case 'validate_key':
+      case 'image_to_image':
+        response = await (tool as Tool<ImageToImageArgs>).handler(args as unknown as ImageToImageArgs);
+        break;
+      case 'multi_image_edit':
+        response = await (tool as Tool<MultiImageEditArgs>).handler(args as unknown as MultiImageEditArgs);
+        break;
+      case 'validate_api_key':
         response = await (tool as Tool<ValidateKeyArgs>).handler({});
         break;
       default:
@@ -128,7 +130,7 @@ async function main() {
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('DALL-E MCP server running on stdio');
+  console.error('GPT-Image MCP server running on stdio');
 }
 
 main().catch((error) => {

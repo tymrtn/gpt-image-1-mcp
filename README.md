@@ -1,14 +1,18 @@
-# DALL-E MCP Server
+# GPT-Image MCP Server
 
-<img src="assets/dall-e-logo.png" alt="DALL-E MCP Logo" width="256" height="256">
+<img src="assets/dall-e-logo.png" alt="GPT-Image MCP Logo" width="256" height="256">
 
-An MCP (Model Context Protocol) server for generating images using OpenAI's DALL-E API.
+An MCP (Model Context Protocol) server for generating images using OpenAI's GPT-Image-1 API.
+
+> **Note:** This is a fork of the original [DALL-E MCP Server](https://github.com/Garoth/dalle-mcp) by [Garoth](https://github.com/Garoth), refactored to exclusively support GPT-Image-1 and remove support for DALL-E 2 and DALL-E 3 models.
 
 ## Features
 
-- Generate images using DALL-E 2 or DALL-E 3
-- Edit existing images (DALL-E 2 only)
-- Create variations of existing images (DALL-E 2 only)
+- Generate images using GPT-Image-1
+- Edit existing images using GPT-Image-1
+- Create variations of existing images using GPT-Image-1
+- Image-to-image generation with GPT-Image-1
+- Multi-image editing with GPT-Image-1
 - Validate OpenAI API key
 
 ## Installation
@@ -27,7 +31,7 @@ npm run build
 
 ## Important Note for Cline Users
 
-When using this DALL-E MCP server with Cline, it's recommended to save generated images in your current workspace directory by setting the `saveDir` parameter to match your current working directory. This ensures Cline can properly locate and display the generated images in your conversation.
+When using this GPT-Image MCP server with Cline, it's recommended to save generated images in your current workspace directory by setting the `saveDir` parameter to match your current working directory. This ensures Cline can properly locate and display the generated images in your conversation.
 
 Example usage with Cline:
 ```json
@@ -49,14 +53,14 @@ node build/index.js
 
 ### Configuration for Cline
 
-Add the dall-e server to your Cline MCP settings file inside VSCode's settings (ex. ~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json):
+Add the GPT-Image server to your Cline MCP settings file inside VSCode's settings (ex. ~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json):
 
 ```json
 {
   "mcpServers": {
-    "dalle-mcp": {
+    "gpt-image-mcp": {
       "command": "node",
-      "args": ["/path/to/dalle-mcp-server/build/index.js"],
+      "args": ["/path/to/gpt-image-mcp-server/build/index.js"],
       "env": {
         "OPENAI_API_KEY": "your-api-key-here",
         "SAVE_DIR": "/path/to/save/directory"
@@ -69,22 +73,23 @@ Add the dall-e server to your Cline MCP settings file inside VSCode's settings (
 ```
 
 Make sure to:
-1. Replace `/path/to/dalle-mcp-server/build/index.js` with the actual path to the built index.js file
+1. Replace `/path/to/gpt-image-mcp-server/build/index.js` with the actual path to the built index.js file
 2. Replace `your-api-key-here` with your OpenAI API key
 
 ### Available Tools
 
 #### generate_image
 
-Generate an image using DALL-E based on a text prompt.
+Generate an image using GPT-Image-1 based on a text prompt.
 
 ```json
 {
   "prompt": "A futuristic city with flying cars and neon lights",
-  "model": "dall-e-3",
   "size": "1024x1024",
-  "quality": "standard",
-  "style": "vivid",
+  "quality": "high",
+  "background": "auto",
+  "moderation": "auto",
+  "output_format": "png",
   "n": 1,
   "saveDir": "/path/to/save/directory",
   "fileName": "futuristic-city"
@@ -93,29 +98,31 @@ Generate an image using DALL-E based on a text prompt.
 
 Parameters:
 - `prompt` (required): Text description of the desired image
-- `model` (optional): DALL-E model to use ("dall-e-2" or "dall-e-3", default: "dall-e-3")
-- `size` (optional): Size of the generated image (default: "1024x1024")
-  - DALL-E 3: "1024x1024", "1792x1024", or "1024x1792"
-  - DALL-E 2: "256x256", "512x512", or "1024x1024"
-- `quality` (optional): Quality of the generated image, DALL-E 3 only ("standard" or "hd", default: "standard")
-- `style` (optional): Style of the generated image, DALL-E 3 only ("vivid" or "natural", default: "vivid")
+- `size` (optional): Size of the generated image: "1024x1024", "1792x1024", "1024x1792", or "auto" (default: "auto")
+- `quality` (optional): Quality of the generated image: "high", "medium", "low", or "auto" (default: "auto")
+- `background` (optional): Background transparency: "transparent", "opaque", or "auto" (default: "auto")
+- `moderation` (optional): Content moderation level: "low" or "auto" (default: "auto")
+- `output_format` (optional): Format of the generated image: "png", "jpeg", or "webp" (default: "png")
+- `output_compression` (optional): Compression level (0-100%) for webp/jpeg formats (default: 100)
 - `n` (optional): Number of images to generate (1-10, default: 1)
 - `saveDir` (optional): Directory to save the generated images (default: current directory or SAVE_DIR from .env). **For Cline users:** Setting this to your current workspace directory is recommended for proper image display.
-- `fileName` (optional): Base filename for the generated images without extension (default: "dalle-{timestamp}")
+- `fileName` (optional): Base filename for the generated images without extension (default: "gpt-image-{timestamp}")
 
 #### edit_image
 
-Edit an existing image using DALL-E based on a text prompt.
-
-> **⚠️ Known Issue (March 18, 2025):** The DALL-E 2 image edit API currently has a bug where it sometimes ignores the prompt and returns the original image without any edits, even when using proper RGBA format images and masks. This issue has been reported in the [OpenAI community forum](https://community.openai.com/t/dall-e-2-image-edit-issue/668376/7). If you experience this issue, try using the `create_variation` tool instead, which seems to work more reliably.
+Edit an existing image using GPT-Image-1 based on a text prompt.
 
 ```json
 {
   "prompt": "Add a red hat",
   "imagePath": "/path/to/image.png",
   "mask": "/path/to/mask.png",
-  "model": "dall-e-2",
   "size": "1024x1024",
+  "quality": "high",
+  "background": "auto",
+  "moderation": "auto",
+  "output_format": "png",
+  "output_compression": 100,
   "n": 1,
   "saveDir": "/path/to/save/directory",
   "fileName": "edited-image"
@@ -125,21 +132,24 @@ Edit an existing image using DALL-E based on a text prompt.
 Parameters:
 - `prompt` (required): Text description of the desired edits
 - `imagePath` (required): Path to the image to edit
-- `mask` (optional): Path to the mask image (white areas will be edited, black areas preserved)
-- `model` (optional): DALL-E model to use (currently only "dall-e-2" supports editing, default: "dall-e-2")
-- `size` (optional): Size of the generated image (default: "1024x1024")
+- `mask` (optional): Path to a mask image where the white areas will be edited and black areas will be preserved
+- `size` (optional): Size of the generated image: "1024x1024", "1792x1024", "1024x1792", or "auto" (default: "auto")
+- `quality` (optional): Quality of the generated image: "high", "medium", "low", or "auto" (default: "auto")
+- `background` (optional): Background transparency: "transparent", "opaque", or "auto" (default: "auto")
+- `moderation` (optional): Content moderation level: "low" or "auto" (default: "auto")
+- `output_format` (optional): Format of the generated image: "png", "jpeg", or "webp" (default: "png")
+- `output_compression` (optional): Compression level (0-100%) for webp/jpeg formats (default: 100)
 - `n` (optional): Number of images to generate (1-10, default: 1)
 - `saveDir` (optional): Directory to save the edited images (default: current directory or SAVE_DIR from .env). **For Cline users:** Setting this to your current workspace directory is recommended for proper image display.
-- `fileName` (optional): Base filename for the edited images without extension (default: "dalle-edit-{timestamp}")
+- `fileName` (optional): Base filename for the edited images without extension (default: "gpt-image-edit-{timestamp}")
 
 #### create_variation
 
-Create variations of an existing image using DALL-E.
+Create variations of an existing image using GPT-Image-1.
 
 ```json
 {
   "imagePath": "/path/to/image.png",
-  "model": "dall-e-2",
   "size": "1024x1024",
   "n": 4,
   "saveDir": "/path/to/save/directory",
@@ -149,13 +159,78 @@ Create variations of an existing image using DALL-E.
 
 Parameters:
 - `imagePath` (required): Path to the image to create variations of
-- `model` (optional): DALL-E model to use (currently only "dall-e-2" supports variations, default: "dall-e-2")
-- `size` (optional): Size of the generated image (default: "1024x1024")
+- `size` (optional): Size of the generated image: "1024x1024", "1792x1024", "1024x1792", or "auto" (default: "auto")
 - `n` (optional): Number of variations to generate (1-10, default: 1)
 - `saveDir` (optional): Directory to save the variation images (default: current directory or SAVE_DIR from .env). **For Cline users:** Setting this to your current workspace directory is recommended for proper image display.
-- `fileName` (optional): Base filename for the variation images without extension (default: "dalle-variation-{timestamp}")
+- `fileName` (optional): Base filename for the variation images without extension (default: "gpt-image-variation-{timestamp}")
 
-#### validate_key
+#### image_to_image
+
+Generate an image using an existing image as input with GPT-Image-1.
+
+```json
+{
+  "imagePath": "/path/to/image.png",
+  "prompt": "Transform this into a watercolor painting",
+  "size": "1024x1024",
+  "quality": "high",
+  "background": "auto",
+  "moderation": "auto",
+  "output_format": "png",
+  "output_compression": 100,
+  "n": 1,
+  "saveDir": "/path/to/save/directory",
+  "fileName": "transformed-image"
+}
+```
+
+Parameters:
+- `imagePath` (required): Path to the input image
+- `prompt` (required): Text description to guide the generation
+- `size` (optional): Size of the generated image: "1024x1024", "1792x1024", "1024x1792", or "auto" (default: "auto")
+- `quality` (optional): Quality of the generated image: "high", "medium", "low", or "auto" (default: "auto")
+- `background` (optional): Background transparency: "transparent", "opaque", or "auto" (default: "auto")
+- `moderation` (optional): Content moderation level: "low" or "auto" (default: "auto")
+- `output_format` (optional): Format of the generated image: "png", "jpeg", or "webp" (default: "png")
+- `output_compression` (optional): Compression level (0-100%) for webp/jpeg formats (default: 100)
+- `n` (optional): Number of images to generate (1-10, default: 1)
+- `saveDir` (optional): Directory to save the generated images (default: current directory or SAVE_DIR from .env). **For Cline users:** Setting this to your current workspace directory is recommended for proper image display.
+- `fileName` (optional): Base filename for the generated images without extension (default: "gpt-image-{timestamp}")
+
+#### multi_image_edit
+
+Edit multiple images together using GPT-Image-1.
+
+```json
+{
+  "prompt": "Combine these images into a cohesive scene",
+  "imagePaths": ["/path/to/image1.png", "/path/to/image2.png"],
+  "size": "1024x1024",
+  "quality": "high",
+  "background": "auto",
+  "moderation": "auto",
+  "output_format": "png",
+  "output_compression": 100,
+  "n": 1,
+  "saveDir": "/path/to/save/directory",
+  "fileName": "combined-image"
+}
+```
+
+Parameters:
+- `prompt` (required): Text description to guide the generation
+- `imagePaths` (required): Array of paths to the input images
+- `size` (optional): Size of the generated image: "1024x1024", "1792x1024", "1024x1792", or "auto" (default: "auto")
+- `quality` (optional): Quality of the generated image: "high", "medium", "low", or "auto" (default: "auto")
+- `background` (optional): Background transparency: "transparent", "opaque", or "auto" (default: "auto")
+- `moderation` (optional): Content moderation level: "low" or "auto" (default: "auto")
+- `output_format` (optional): Format of the generated image: "png", "jpeg", or "webp" (default: "png")
+- `output_compression` (optional): Compression level (0-100%) for webp/jpeg formats (default: 100)
+- `n` (optional): Number of images to generate (1-10, default: 1)
+- `saveDir` (optional): Directory to save the generated images (default: current directory or SAVE_DIR from .env). **For Cline users:** Setting this to your current workspace directory is recommended for proper image display.
+- `fileName` (optional): Base filename for the generated images without extension (default: "gpt-image-{timestamp}")
+
+#### validate_api_key
 
 Validate the OpenAI API key.
 
@@ -211,10 +286,14 @@ The project includes a script to generate test images for development and testin
 ```bash
 # Generate a test image in the assets directory
 npm run generate-test-image
-  ```
+```
 
 This will create a simple test image in the `assets` directory that can be used for testing the edit and variation features.
 
 ## License
 
 MIT
+
+## Acknowledgments
+
+This project is a fork of the original [DALL-E MCP Server](https://github.com/Garoth/dalle-mcp) created by [Garoth](https://github.com/Garoth), modified to work exclusively with GPT-Image-1 model.

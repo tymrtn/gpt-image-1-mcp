@@ -1,0 +1,53 @@
+# GPT-Image MCP Server Rules and Notes
+
+## Model Information
+- The server exclusively supports OpenAI's GPT-Image-1 model
+- DALL-E 2 and DALL-E 3 are no longer supported
+
+## API Parameters
+- Required parameters:
+  - Generate/Edit/Image-to-Image: prompt 
+  - Variation: imagePath
+  - Multi-image edit: prompt, imagePaths
+- Available optional parameters:
+  - size: "1024x1024", "1792x1024", "1024x1792", "auto" (default: "auto")
+  - quality: "high", "medium", "low", "auto" (default: "auto")
+  - background: "transparent", "opaque", "auto" (default: "auto")
+  - moderation: "low", "auto" (default: "auto")
+  - output_format: "png", "jpeg", "webp" (default: "png")
+  - output_compression: 0-100 (default: 100) for webp/jpeg
+  - n: 1-10 (default: 1)
+  - saveDir: Directory to save images (default: current directory or SAVE_DIR)
+  - fileName: Base filename (default: "gpt-image-{timestamp}")
+
+## GPT-Image-1 vs DALL-E 3 Differences
+- GPT-Image-1 is more realistic and consistent but may be less creative/fantastical than DALL-E 3
+- GPT-Image-1 supports transparency (PNG with transparent backgrounds)
+- GPT-Image-1 handles multi-image inputs natively
+- GPT-Image-1 has different size options (1024x1024, 1792x1024, 1024x1792)
+- GPT-Image-1 doesn't have the "style" parameter that DALL-E 3 had ("vivid" or "natural")
+- GPT-Image-1 has more output formats (png, jpeg, webp) with compression options
+
+## Supported Features
+1. Text-to-image generation (generate_image)
+2. Image editing with mask (edit_image)
+3. Image variations (create_variation)
+4. Image-to-image transformation (image_to_image)
+5. Multi-image editing/combining (multi_image_edit)
+6. API key validation (validate_api_key)
+
+## API Usage
+- API requests use b64_json response format to retrieve image data
+- Each generated image is saved to disk with a timestamp-based filename
+- The server returns paths to the saved images as part of the response
+
+## Development Notes
+- Remember to update all MCP settings to point to "gpt-image-mcp" instead of "dalle-mcp"
+- API key is required in MCP settings or as an environment variable
+- Default save directory can be specified in MCP settings or as an environment variable
+- The server validates API key on startup
+
+## Testing
+- Test files include specific tests for GPT-Image-1 functionality
+- Tests use real API calls and may incur charges
+- Sample test images are provided in the assets directory 

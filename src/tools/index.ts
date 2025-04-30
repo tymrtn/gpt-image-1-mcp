@@ -3,6 +3,8 @@ import {
   GenerateImageArgs, 
   EditImageArgs, 
   VariationArgs, 
+  ImageToImageArgs,
+  MultiImageEditArgs,
   ValidateKeyArgs, 
   ToolResponse 
 } from '../types/index.js';
@@ -15,34 +17,287 @@ const dalleService = new DalleService({
 
 export const tools = [
   {
-    name: "generate_image",
-    description: "Generate an image using DALL-E based on a text prompt",
+    name: "multi_image_edit",
+    description: "Edit multiple images together using GPT-Image-1",
     inputSchema: {
       type: "object",
       properties: {
         prompt: {
           type: "string",
-          description: "Text description of the desired image"
+          description: "Text description to guide the generation"
         },
-        model: {
-          type: "string",
-          description: "DALL-E model to use (dall-e-2 or dall-e-3)",
-          enum: ["dall-e-2", "dall-e-3"]
+        imagePaths: {
+          type: "array",
+          description: "Array of paths to the input images",
+          items: {
+            type: "string"
+          }
         },
         size: {
           type: "string",
           description: "Size of the generated image",
-          enum: ["256x256", "512x512", "1024x1024", "1792x1024", "1024x1792"]
+          enum: ["1024x1024", "1792x1024", "1024x1792", "auto"]
         },
         quality: {
           type: "string",
-          description: "Quality of the generated image (dall-e-3 only)",
-          enum: ["standard", "hd"]
+          description: "Quality of the generated image",
+          enum: ["high", "medium", "low", "auto"]
         },
-        style: {
+        background: {
           type: "string",
-          description: "Style of the generated image (dall-e-3 only)",
-          enum: ["vivid", "natural"]
+          description: "Background transparency setting",
+          enum: ["transparent", "opaque", "auto"]
+        },
+        moderation: {
+          type: "string",
+          description: "Content moderation level",
+          enum: ["low", "auto"]
+        },
+        output_format: {
+          type: "string",
+          description: "Format of the generated image",
+          enum: ["png", "jpeg", "webp"]
+        },
+        output_compression: {
+          type: "number",
+          description: "Compression level (0-100%) for webp/jpeg formats",
+          minimum: 0,
+          maximum: 100
+        },
+        n: {
+          type: "number",
+          description: "Number of images to generate (1-10)",
+          minimum: 1,
+          maximum: 10
+        },
+        saveDir: {
+          type: "string",
+          description: "Directory to save the generated images"
+        },
+        fileName: {
+          type: "string",
+          description: "Base filename for the generated images (without extension)"
+        }
+      },
+      required: ["prompt", "imagePaths"]
+    },
+    handler: async (args: MultiImageEditArgs): Promise<ToolResponse> => {
+      // Resolve relative paths to absolute paths
+      const resolvedImagePaths = args.imagePaths.map(imgPath => 
+        path.isAbsolute(imgPath) ? imgPath : path.resolve(process.cwd(), imgPath)
+      );
+
+      const result = await dalleService.editMultipleImages(args.prompt, resolvedImagePaths, {
+        size: args.size,
+        quality: args.quality,
+        background: args.background,
+        moderation: args.moderation,
+        output_format: args.output_format,
+        output_compression: args.output_compression,
+        n: args.n,
+        saveDir: args.saveDir,
+        fileName: args.fileName
+      });
+
+      if (!result.success) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error editing multiple images: ${result.error}`
+          }]
+        };
+      }
+
+      const imagePaths = result.imagePaths || [];
+      const imageCount = imagePaths.length;
+      const model = 'gpt-image-1';
+
+      let responseText = `Successfully created ${imageCount} composite image${imageCount !== 1 ? 's' : ''} using ${model}.\n\n`;
+      
+      responseText += `Input images:\n`;
+      resolvedImagePaths.forEach(imagePath => {
+        responseText += `- ${imagePath}\n`;
+      });
+      
+      responseText += `\nPrompt: "${result.prompt}"\n\n`;
+      
+      // Add token usage if available
+      if (result.usage) {
+        responseText += `Token usage:\n`;
+        responseText += `- Total tokens: ${result.usage.total_tokens}\n`;
+        responseText += `- Input tokens: ${result.usage.input_tokens}\n`;
+        responseText += `- Output tokens: ${result.usage.output_tokens}\n`;
+        if (result.usage.input_tokens_details) {
+          responseText += `- Text tokens: ${result.usage.input_tokens_details.text_tokens}\n`;
+          responseText += `- Image tokens: ${result.usage.input_tokens_details.image_tokens}\n`;
+        }
+        responseText += `\n`;
+      }
+      
+      responseText += `Generated image${imageCount !== 1 ? 's' : ''} saved to:\n`;
+      
+      imagePaths.forEach(imagePath => {
+        responseText += `- ${imagePath}\n`;
+      });
+
+      return {
+        content: [{
+          type: "text",
+          text: responseText
+        }]
+      };
+    }
+  },
+  {
+    name: "image_to_image",
+    description: "Generate an image using an existing image as input with GPT-Image-1",
+    inputSchema: {
+      type: "object",
+      properties: {
+        imagePath: {
+          type: "string",
+          description: "Path to the input image"
+        },
+        prompt: {
+          type: "string",
+          description: "Text description to guide the generation"
+        },
+        size: {
+          type: "string",
+          description: "Size of the generated image",
+          enum: ["1024x1024", "1792x1024", "1024x1536", "auto"]
+        },
+        quality: {
+          type: "string",
+          description: "Quality of the generated image",
+          enum: ["high", "medium", "low", "auto"]
+        },
+        background: {
+          type: "string",
+          description: "Background transparency setting",
+          enum: ["transparent", "opaque", "auto"]
+        },
+        moderation: {
+          type: "string",
+          description: "Content moderation level",
+          enum: ["low", "auto"]
+        },
+        output_format: {
+          type: "string",
+          description: "Format of the generated image",
+          enum: ["png", "jpeg", "webp"]
+        },
+        output_compression: {
+          type: "number",
+          description: "Compression level (0-100%) for webp/jpeg formats",
+          minimum: 0,
+          maximum: 100
+        },
+        n: {
+          type: "number",
+          description: "Number of images to generate (1-10)",
+          minimum: 1,
+          maximum: 10
+        },
+        saveDir: {
+          type: "string",
+          description: "Directory to save the generated images"
+        },
+        fileName: {
+          type: "string",
+          description: "Base filename for the generated images (without extension)"
+        }
+      },
+      required: ["imagePath", "prompt"]
+    },
+    handler: async (args: ImageToImageArgs): Promise<ToolResponse> => {
+      // Resolve relative path to absolute path
+      const imagePath = path.isAbsolute(args.imagePath) 
+        ? args.imagePath 
+        : path.resolve(process.cwd(), args.imagePath);
+
+      const result = await dalleService.imageToImage(imagePath, args.prompt, {
+        size: args.size,
+        quality: args.quality,
+        background: args.background,
+        moderation: args.moderation,
+        output_format: args.output_format,
+        output_compression: args.output_compression,
+        n: args.n,
+        saveDir: args.saveDir,
+        fileName: args.fileName
+      });
+
+      if (!result.success) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error generating image from input image: ${result.error}`
+          }]
+        };
+      }
+
+      const imagePaths = result.imagePaths || [];
+      const imageCount = imagePaths.length;
+      const model = 'gpt-image-1';
+
+      let responseText = `Successfully generated ${imageCount} image${imageCount !== 1 ? 's' : ''} from input image using ${model}.\n\n`;
+      responseText += `Input image: ${imagePath}\n`;
+      responseText += `Prompt: "${result.prompt}"\n\n`;
+      responseText += `Generated image${imageCount !== 1 ? 's' : ''} saved to:\n`;
+      
+      imagePaths.forEach(imagePath => {
+        responseText += `- ${imagePath}\n`;
+      });
+
+      return {
+        content: [{
+          type: "text",
+          text: responseText
+        }]
+      };
+    }
+  },
+  {
+    name: "generate_image",
+    description: "Generate an image using GPT-Image-1 based on a text prompt",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prompt: {
+          type: "string",
+          description: "Text description of the desired image (max length 32000 characters)"
+        },
+        size: {
+          type: "string",
+          description: "Size of the generated image",
+          enum: ["1024x1024", "1792x1024", "1024x1792", "auto"]
+        },
+        quality: {
+          type: "string",
+          description: "Quality of the generated image",
+          enum: ["high", "medium", "low", "auto"]
+        },
+        background: {
+          type: "string",
+          description: "Background transparency setting",
+          enum: ["transparent", "opaque", "auto"]
+        },
+        moderation: {
+          type: "string",
+          description: "Content moderation level",
+          enum: ["low", "auto"]
+        },
+        output_format: {
+          type: "string",
+          description: "Format of the generated image",
+          enum: ["png", "jpeg", "webp"]
+        },
+        output_compression: {
+          type: "number",
+          description: "Compression level (0-100%) for webp/jpeg formats",
+          minimum: 0,
+          maximum: 100
         },
         n: {
           type: "number",
@@ -63,10 +318,12 @@ export const tools = [
     },
     handler: async (args: GenerateImageArgs): Promise<ToolResponse> => {
       const result = await dalleService.generateImage(args.prompt, {
-        model: args.model,
         size: args.size,
         quality: args.quality,
-        style: args.style,
+        background: args.background,
+        moderation: args.moderation,
+        output_format: args.output_format,
+        output_compression: args.output_compression,
         n: args.n,
         saveDir: args.saveDir,
         fileName: args.fileName
@@ -83,11 +340,25 @@ export const tools = [
 
       const imagePaths = result.imagePaths || [];
       const imageCount = imagePaths.length;
-      const model = result.model || 'dall-e-3';
+      const model = 'gpt-image-1';
 
       let responseText = `Successfully generated ${imageCount} image${imageCount !== 1 ? 's' : ''} using ${model}.\n\n`;
       responseText += `Prompt: "${result.prompt}"\n\n`;
-      responseText += `Image${imageCount !== 1 ? 's' : ''} saved to:\n`;
+      
+      // Add token usage if available
+      if (result.usage) {
+        responseText += `Token usage:\n`;
+        responseText += `- Total tokens: ${result.usage.total_tokens}\n`;
+        responseText += `- Input tokens: ${result.usage.input_tokens}\n`;
+        responseText += `- Output tokens: ${result.usage.output_tokens}\n`;
+        if (result.usage.input_tokens_details) {
+          responseText += `- Text tokens: ${result.usage.input_tokens_details.text_tokens}\n`;
+          responseText += `- Image tokens: ${result.usage.input_tokens_details.image_tokens}\n`;
+        }
+        responseText += `\n`;
+      }
+      
+      responseText += `Generated image${imageCount !== 1 ? 's' : ''} saved to:\n`;
       
       imagePaths.forEach(imagePath => {
         responseText += `- ${imagePath}\n`;
@@ -103,7 +374,7 @@ export const tools = [
   },
   {
     name: "edit_image",
-    description: "Edit an existing image using DALL-E based on a text prompt",
+    description: "Edit an existing image using GPT-Image-1 based on a text prompt",
     inputSchema: {
       type: "object",
       properties: {
@@ -117,17 +388,38 @@ export const tools = [
         },
         mask: {
           type: "string",
-          description: "Path to the mask image (white areas will be edited, black areas preserved)"
-        },
-        model: {
-          type: "string",
-          description: "DALL-E model to use (currently only dall-e-2 supports editing)",
-          enum: ["dall-e-2"]
+          description: "Optional path to a mask image where the white areas will be edited and black areas will be preserved"
         },
         size: {
           type: "string",
           description: "Size of the generated image",
-          enum: ["256x256", "512x512", "1024x1024"]
+          enum: ["1024x1024", "1792x1024", "1024x1792", "auto"]
+        },
+        quality: {
+          type: "string",
+          description: "Quality of the generated image",
+          enum: ["high", "medium", "low", "auto"]
+        },
+        background: {
+          type: "string",
+          description: "Background transparency setting",
+          enum: ["transparent", "opaque", "auto"]
+        },
+        moderation: {
+          type: "string",
+          description: "Content moderation level",
+          enum: ["low", "auto"]
+        },
+        output_format: {
+          type: "string",
+          description: "Format of the generated image",
+          enum: ["png", "jpeg", "webp"]
+        },
+        output_compression: {
+          type: "number",
+          description: "Compression level (0-100%) for webp/jpeg formats",
+          minimum: 0,
+          maximum: 100
         },
         n: {
           type: "number",
@@ -137,7 +429,7 @@ export const tools = [
         },
         saveDir: {
           type: "string",
-          description: "Directory to save the edited images"
+          description: "Directory to save the generated images"
         },
         fileName: {
           type: "string",
@@ -152,14 +444,20 @@ export const tools = [
         ? args.imagePath 
         : path.resolve(process.cwd(), args.imagePath);
       
-      const mask = args.mask && !path.isAbsolute(args.mask)
-        ? path.resolve(process.cwd(), args.mask)
-        : args.mask;
+      const maskPath = args.mask 
+        ? path.isAbsolute(args.mask) 
+          ? args.mask 
+          : path.resolve(process.cwd(), args.mask)
+        : undefined;
 
       const result = await dalleService.editImage(args.prompt, imagePath, {
-        mask,
-        model: args.model,
+        mask: maskPath,
         size: args.size,
+        quality: args.quality,
+        background: args.background,
+        moderation: args.moderation,
+        output_format: args.output_format,
+        output_compression: args.output_compression,
         n: args.n,
         saveDir: args.saveDir,
         fileName: args.fileName
@@ -176,14 +474,28 @@ export const tools = [
 
       const imagePaths = result.imagePaths || [];
       const imageCount = imagePaths.length;
-      const model = result.model || 'dall-e-2';
+      const model = 'gpt-image-1';
 
-      let responseText = `Successfully edited image and generated ${imageCount} variation${imageCount !== 1 ? 's' : ''} using ${model}.\n\n`;
+      let responseText = `Successfully edited ${imageCount} image${imageCount !== 1 ? 's' : ''} using ${model}.\n\n`;
       responseText += `Original image: ${imagePath}\n`;
-      if (mask) {
-        responseText += `Mask: ${mask}\n`;
+      if (maskPath) {
+        responseText += `Mask image: ${maskPath}\n`;
       }
       responseText += `Prompt: "${result.prompt}"\n\n`;
+      
+      // Add token usage if available
+      if (result.usage) {
+        responseText += `Token usage:\n`;
+        responseText += `- Total tokens: ${result.usage.total_tokens}\n`;
+        responseText += `- Input tokens: ${result.usage.input_tokens}\n`;
+        responseText += `- Output tokens: ${result.usage.output_tokens}\n`;
+        if (result.usage.input_tokens_details) {
+          responseText += `- Text tokens: ${result.usage.input_tokens_details.text_tokens}\n`;
+          responseText += `- Image tokens: ${result.usage.input_tokens_details.image_tokens}\n`;
+        }
+        responseText += `\n`;
+      }
+      
       responseText += `Edited image${imageCount !== 1 ? 's' : ''} saved to:\n`;
       
       imagePaths.forEach(imagePath => {
@@ -200,7 +512,7 @@ export const tools = [
   },
   {
     name: "create_variation",
-    description: "Create variations of an existing image using DALL-E",
+    description: "Create variations of an existing image using GPT-Image-1",
     inputSchema: {
       type: "object",
       properties: {
@@ -208,15 +520,10 @@ export const tools = [
           type: "string",
           description: "Path to the image to create variations of"
         },
-        model: {
-          type: "string",
-          description: "DALL-E model to use (currently only dall-e-2 supports variations)",
-          enum: ["dall-e-2"]
-        },
         size: {
           type: "string",
           description: "Size of the generated image",
-          enum: ["256x256", "512x512", "1024x1024"]
+          enum: ["1024x1024", "1792x1024", "1024x1792", "auto"]
         },
         n: {
           type: "number",
@@ -226,7 +533,7 @@ export const tools = [
         },
         saveDir: {
           type: "string",
-          description: "Directory to save the variation images"
+          description: "Directory to save the generated images"
         },
         fileName: {
           type: "string",
@@ -242,7 +549,6 @@ export const tools = [
         : path.resolve(process.cwd(), args.imagePath);
 
       const result = await dalleService.createVariation(imagePath, {
-        model: args.model,
         size: args.size,
         n: args.n,
         saveDir: args.saveDir,
@@ -253,17 +559,18 @@ export const tools = [
         return {
           content: [{
             type: "text",
-            text: `Error creating image variations: ${result.error}`
+            text: `Error creating variations: ${result.error}`
           }]
         };
       }
 
       const imagePaths = result.imagePaths || [];
       const imageCount = imagePaths.length;
-      const model = result.model || 'dall-e-2';
+      const model = 'gpt-image-1';
 
       let responseText = `Successfully created ${imageCount} variation${imageCount !== 1 ? 's' : ''} using ${model}.\n\n`;
       responseText += `Original image: ${imagePath}\n\n`;
+      
       responseText += `Variation${imageCount !== 1 ? 's' : ''} saved to:\n`;
       
       imagePaths.forEach(imagePath => {
@@ -279,8 +586,8 @@ export const tools = [
     }
   },
   {
-    name: "validate_key",
-    description: "Validate the OpenAI API key",
+    name: "validate_api_key",
+    description: "Validate the OpenAI API key by making a test request",
     inputSchema: {
       type: "object",
       properties: {},
@@ -288,12 +595,33 @@ export const tools = [
     },
     handler: async (_args: ValidateKeyArgs): Promise<ToolResponse> => {
       const isValid = await dalleService.validateApiKey();
-      return {
-        content: [{
-          type: "text",
-          text: isValid ? "API key is valid" : "API key is invalid"
-        }]
-      };
+
+      if (isValid) {
+        return {
+          content: [{
+            type: "text",
+            text: "API key is valid."
+          }]
+        };
+      } else {
+        return {
+          content: [{
+            type: "text",
+            text: "API key is invalid or there was an error validating it."
+          }]
+        };
+      }
     }
   }
 ];
+
+// Function to list all available tools
+export function listTools() {
+  return {
+    tools: tools.map(tool => ({
+      name: tool.name,
+      description: tool.description,
+      inputSchema: tool.inputSchema
+    }))
+  };
+}

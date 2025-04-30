@@ -1,15 +1,19 @@
 {
-  "name": "dalle-mcp-server",
+  "name": "gpt-image-mcp-server",
   "version": "1.0.0",
-  "description": "MCP server for generating images using OpenAI's DALL-E API",
+  "description": "MCP server for generating images using OpenAI's GPT-Image-1 API (fork of dalle-mcp-server)",
   "private": true,
   "type": "module",
   "bin": {
-    "dalle-mcp-server": "./build/index.js"
+    "gpt-image-mcp-server": "./build/index.js"
   },
   "files": [
     "build"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Garoth/dalle-mcp.git"
+  },
   "scripts": {
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "prepare": "npm run build",

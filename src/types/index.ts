@@ -10,10 +10,12 @@ export interface ToolResponse {
 
 export interface GenerateImageArgs {
   prompt: string;
-  model?: string;
   size?: string;
   quality?: string;
-  style?: string;
+  background?: string;
+  moderation?: string;
+  output_format?: string;
+  output_compression?: number;
   n?: number;
   saveDir?: string;
   fileName?: string;
@@ -23,8 +25,12 @@ export interface EditImageArgs {
   prompt: string;
   imagePath: string;
   mask?: string;
-  model?: string;
   size?: string;
+  quality?: string;
+  background?: string;
+  moderation?: string;
+  output_format?: string;
+  output_compression?: number;
   n?: number;
   saveDir?: string;
   fileName?: string;
@@ -32,8 +38,21 @@ export interface EditImageArgs {
 
 export interface VariationArgs {
   imagePath: string;
-  model?: string;
   size?: string;
+  n?: number;
+  saveDir?: string;
+  fileName?: string;
+}
+
+export interface ImageToImageArgs {
+  imagePath: string;
+  prompt: string;
+  size?: string;
+  quality?: string;
+  background?: string;
+  moderation?: string;
+  output_format?: string;
+  output_compression?: number;
   n?: number;
   saveDir?: string;
   fileName?: string;
@@ -41,7 +60,7 @@ export interface VariationArgs {
 
 export interface ValidateKeyArgs {}
 
-export type ToolArgs = GenerateImageArgs | EditImageArgs | VariationArgs | ValidateKeyArgs;
+export type ToolArgs = GenerateImageArgs | EditImageArgs | VariationArgs | ImageToImageArgs | ValidateKeyArgs;
 
 export interface Tool<T = any> {
   name: string;
@@ -62,10 +81,37 @@ export interface ListToolsResponse {
   }>;
 }
 
+export interface TokenUsageDetails {
+  text_tokens?: number;
+  image_tokens?: number;
+}
+
+export interface TokenUsage {
+  total_tokens?: number;
+  input_tokens?: number;
+  output_tokens?: number;
+  input_tokens_details?: TokenUsageDetails;
+}
+
 export interface ImageGenerationResult {
   success: boolean;
   error?: string;
   imagePaths?: string[];
   model?: string;
   prompt?: string;
+  usage?: TokenUsage;
+}
+
+export interface MultiImageEditArgs {
+  prompt: string;
+  imagePaths: string[];
+  size?: string;
+  quality?: string;
+  background?: string;
+  moderation?: string;
+  output_format?: string;
+  output_compression?: number;
+  n?: number;
+  saveDir?: string;
+  fileName?: string;
 }
