@@ -333,26 +333,92 @@ export class DalleService {
       const data = response.data;
       const imagePaths: string[] = [];
 
-      // Save each image
+      // Check if data structure is as expected
+      if (!data.data || !Array.isArray(data.data) || data.data.length === 0) {
+        console.error("DEBUG - Unexpected editImage response structure:", data);
+        throw new Error("Unexpected API response structure. Missing or empty data array.");
+      }
+
+      // Save each image with careful validation
       for (let i = 0; i < data.data.length; i++) {
         const item = data.data[i];
-        const resultBuffer = Buffer.from(item.image, 'base64');
-        let resultPath = path.join(saveDir, `${fileName}${n > 1 ? `-${i + 1}` : ''}.${output_format || 'png'}`);
+        let imageBuffer: Buffer | null = null;
+        let imagePath = path.join(saveDir, `${fileName}${n > 1 ? `-${i + 1}` : ''}.${output_format || 'png'}`);
+
+        // Ensure the path is absolute before using it
+        if (!path.isAbsolute(imagePath)) {
+          imagePath = path.resolve(process.cwd(), imagePath);
+        }
+
+        console.log(`DEBUG - Edit Image item ${i}:`, JSON.stringify(item, null, 2));
+        console.log(`DEBUG - Edit Item keys:`, Object.keys(item));
         
-        // Ensure the path is absolute
-        if (!path.isAbsolute(resultPath)) {
-          resultPath = path.resolve(process.cwd(), resultPath);
+        // Handle URL-based responses first
+        if (item.url) {
+          console.log("DEBUG - Found url field, downloading image from URL for edit");
+          try {
+              const urlResponse = await axios.get(item.url, { responseType: 'arraybuffer' });
+              imageBuffer = Buffer.from(urlResponse.data);
+              console.log(`DEBUG - Successfully downloaded image from ${item.url}`);
+          } catch (downloadError) {
+              console.error(`DEBUG - Failed to download image from URL: ${item.url}`, downloadError);
+              // Optionally throw or continue to next item depending on desired behavior
+              throw new Error(`Failed to download edited image from URL: ${item.url}`);
+          }
+        } else {
+          // Try to find image data in various base64 formats
+          let base64Data = null;
+          if (item.b64_json) {
+            console.log("DEBUG - Found b64_json field for edit");
+            base64Data = item.b64_json;
+          } else if (item.image) {
+            console.log("DEBUG - Found image field for edit (assuming base64)");
+            base64Data = item.image; // DALL-E 2 might use 'image'
+          } else {
+            console.error("DEBUG - No recognizable image data in edit item:", item);
+            throw new Error("Image data not found in expected formats (url, b64_json, image) in edit API response");
+          }
+          
+          if (!base64Data) {
+            console.error("DEBUG - Base64 data is null or empty for edit");
+            throw new Error("Base64 image data is empty for edit");
+          }
+          
+          console.log("DEBUG - Edit Base64 data type:", typeof base64Data);
+          console.log("DEBUG - Edit Base64 data length:", base64Data.length);
+          
+          try {
+            imageBuffer = Buffer.from(base64Data, 'base64');
+          } catch (bufferError) {
+              console.error("DEBUG - Error creating buffer from base64 data:", bufferError);
+              throw new Error("Failed to create image buffer from base64 data.");
+          }
         }
         
-        await fs.writeFile(resultPath, resultBuffer);
-        imagePaths.push(resultPath);
+        if (!imageBuffer) {
+            console.error("DEBUG - Image buffer is null after processing item, cannot save.");
+            throw new Error("Failed to obtain image buffer from API response item.");
+        }
+
+        await fs.writeFile(imagePath, imageBuffer);
+        console.log(`DEBUG - Successfully saved edited image to: ${imagePath}`);
+        imagePaths.push(imagePath);
       }
+
+      // Extract token usage if available (GPT-Image-1 might provide this)
+      const usage = data.usage ? {
+        total_tokens: data.usage.total_tokens,
+        input_tokens: data.usage.input_tokens,
+        output_tokens: data.usage.output_tokens,
+        input_tokens_details: data.usage.input_tokens_details
+      } : undefined;
 
       return {
         success: true,
         imagePaths,
         model,
-        prompt
+        prompt,
+        usage // Include usage if available
       };
     } catch (error) {
       console.log("GPT-Image API Error:", error);

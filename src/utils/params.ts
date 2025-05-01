@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs-extra';
 
 // Supported GPT-Image-1 sizes
-const SUPPORTED_SIZES = ['1024x1024', '1792x1024', '1024x1792'];
+const SUPPORTED_SIZES = ['1024x1024', '1024x1536', '1536x1024'];
 
 /**
  * Normalize a requested size string to a supported size or 'auto'.
