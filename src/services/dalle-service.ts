@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import FormData from 'form-data';
 import { ImageGenerationResult } from '../types/index.js';
+import { normalizeSize, resolveSaveDir } from '../utils/params.js';
 
 interface DalleServiceConfig {
   apiKey: string;
@@ -47,8 +48,7 @@ export class DalleService {
       // Set default options
       const model = 'gpt-image-1'; // Only support GPT-Image-1
       const n = options.n || 1;
-      const baseDir = this.config.defaultSaveDir || process.cwd();
-      const saveDir = options.saveDir ? path.resolve(baseDir, options.saveDir) : baseDir;
+      const saveDir = resolveSaveDir(options.saveDir);
       const fileName = options.fileName || `gpt-image-${Date.now()}`;
       const output_format = options.output_format || 'png';
 
@@ -65,11 +65,8 @@ export class DalleService {
         n
       };
       
-      // Valid sizes for GPT-Image-1
-      const validSizes = ['1024x1024', '1792x1024', '1024x1792', 'auto'];
-      
-      // Size parameter (auto is default)
-      requestParams.size = validSizes.includes(options.size || '') ? options.size : 'auto';
+      // Size parameter: normalize to supported or auto
+      requestParams.size = normalizeSize(options.size);
       
       // Quality parameter (auto is default)
       if (options.quality && ['auto', 'high', 'medium', 'low'].includes(options.quality)) {
@@ -247,14 +244,14 @@ export class DalleService {
     try {
       // Set default options
       const model = 'gpt-image-1'; // Only support GPT-Image-1
-      const size = options.size || 'auto';
+      const size = normalizeSize(options.size);
       const quality = options.quality || 'auto';
       const background = options.background || 'auto';
       const moderation = options.moderation || 'auto';
       const output_format = options.output_format || 'png';
       const output_compression = options.output_compression || 100;
       const n = options.n || 1;
-      const saveDir = options.saveDir || this.config.defaultSaveDir || process.cwd();
+      const saveDir = resolveSaveDir(options.saveDir);
       const fileName = options.fileName || `gpt-image-edit-${Date.now()}`;
 
       // Ensure save directory exists
@@ -401,14 +398,14 @@ export class DalleService {
     try {
       // Set default options
       const model = 'gpt-image-1';
-      const size = options.size || 'auto';
+      const size = normalizeSize(options.size);
       const quality = options.quality || 'auto';
       const background = options.background || 'auto';
       const moderation = options.moderation || 'auto';
       const output_format = options.output_format || 'png';
       const output_compression = options.output_compression || 100;
       const n = options.n || 1;
-      const saveDir = options.saveDir || this.config.defaultSaveDir || process.cwd();
+      const saveDir = resolveSaveDir(options.saveDir);
       const fileName = options.fileName || `gpt-img2img-${Date.now()}`;
 
       // Ensure save directory exists
@@ -538,14 +535,14 @@ export class DalleService {
     try {
       // Set default options
       const model = options.model || 'gpt-image-1';
-      const size = options.size || 'auto';
+      const size = normalizeSize(options.size);
       const quality = options.quality || 'auto';
       const background = options.background || 'auto';
       const moderation = options.moderation || 'auto';
       const output_format = options.output_format || 'png';
       const output_compression = options.output_compression || 100;
       const n = options.n || 1;
-      const saveDir = options.saveDir || this.config.defaultSaveDir || process.cwd();
+      const saveDir = resolveSaveDir(options.saveDir);
       const fileName = options.fileName || `image-edit-${Date.now()}`;
 
       // Ensure save directory exists
