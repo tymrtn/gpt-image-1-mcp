@@ -109,6 +109,9 @@ Make sure to:
 
 ### Available Tools
 
+// Consistent saveDir description for README
+const README_SAVE_DIR_DESC = "(optional): Directory to save images. Supports absolute paths (e.g., `/Users/me/images`) and paths relative to the server's Current Working Directory (CWD). Defaults to CWD if unspecified. **Important:** For consistent save locations (especially across different server start directories), use absolute paths.";
+
 #### generate_image
 
 Generate an image using GPT-Image-1 based on a text prompt.
@@ -136,7 +139,7 @@ Parameters:
 - `output_format` (optional): Format of the generated image: "png", "jpeg", or "webp" (default: "png")
 - `output_compression` (optional): Compression level (0-100%) for webp/jpeg formats (default: 100)
 - `n` (optional): Number of images to generate (1-10, default: 1)
-- `saveDir` (optional): Directory to save the generated images (default: current directory or SAVE_DIR from .env). **For Cline users:** Setting this to your current workspace directory is recommended for proper image display.
+- `saveDir` README_SAVE_DIR_DESC
 - `fileName` (optional): Base filename for the generated images without extension (default: "gpt-image-{timestamp}")
 
 #### edit_image
@@ -171,7 +174,7 @@ Parameters:
 - `output_format` (optional): Format of the generated image: "png", "jpeg", or "webp" (default: "png")
 - `output_compression` (optional): Compression level (0-100%) for webp/jpeg formats (default: 100)
 - `n` (optional): Number of images to generate (1-10, default: 1)
-- `saveDir` (optional): Directory to save the edited images (default: current directory or SAVE_DIR from .env). **For Cline users:** Setting this to your current workspace directory is recommended for proper image display.
+- `saveDir` README_SAVE_DIR_DESC
 - `fileName` (optional): Base filename for the edited images without extension (default: "gpt-image-edit-{timestamp}")
 
 #### image_to_image
@@ -204,8 +207,8 @@ Parameters:
 - `output_format` (optional): Format of the generated image: "png", "jpeg", or "webp" (default: "png")
 - `output_compression` (optional): Compression level (0-100%) for webp/jpeg formats (default: 100)
 - `n` (optional): Number of images to generate (1-10, default: 1)
-- `saveDir` (optional): Directory to save the generated images (default: current directory or SAVE_DIR from .env). **For Cline users:** Setting this to your current workspace directory is recommended for proper image display.
-- `fileName` (optional): Base filename for the generated images without extension (default: "gpt-image-{timestamp}")
+- `saveDir` README_SAVE_DIR_DESC
+- `fileName` (optional): Base filename for the generated images without extension (default: "gpt-img2img-{timestamp}")
 
 #### multi_image_edit
 
@@ -237,8 +240,8 @@ Parameters:
 - `output_format` (optional): Format of the generated image: "png", "jpeg", or "webp" (default: "png")
 - `output_compression` (optional): Compression level (0-100%) for webp/jpeg formats (default: 100)
 - `n` (optional): Number of images to generate (1-10, default: 1)
-- `saveDir` (optional): Directory to save the generated images (default: current directory or SAVE_DIR from .env). **For Cline users:** Setting this to your current workspace directory is recommended for proper image display.
-- `fileName` (optional): Base filename for the generated images without extension (default: "gpt-image-{timestamp}")
+- `saveDir` README_SAVE_DIR_DESC
+- `fileName` (optional): Base filename for the generated images without extension (default: "image-edit-{timestamp}")
 
 #### validate_api_key
 

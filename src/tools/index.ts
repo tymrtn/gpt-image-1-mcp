@@ -10,6 +10,9 @@ import {
   Tool
 } from '../types/index.js';
 
+// Consistent saveDir description
+const SAVE_DIR_DESCRIPTION = "Directory to save images. Supports absolute paths (e.g., /Users/me/images) and paths relative to the server's Current Working Directory (CWD). Defaults to CWD if unspecified. **Important:** For consistent locations, use absolute paths.";
+
 // Initialize service
 const dalleService = new DalleService({
   apiKey: process.env.OPENAI_API_KEY || ''
@@ -72,7 +75,7 @@ export const tools: Tool[] = [
         },
         saveDir: {
           type: "string",
-          description: "Directory to save the generated images"
+          description: SAVE_DIR_DESCRIPTION
         },
         fileName: {
           type: "string",
@@ -201,7 +204,7 @@ export const tools: Tool[] = [
         },
         saveDir: {
           type: "string",
-          description: "Directory to save the generated images"
+          description: SAVE_DIR_DESCRIPTION
         },
         fileName: {
           type: "string",
@@ -307,7 +310,7 @@ export const tools: Tool[] = [
         },
         saveDir: {
           type: "string",
-          description: "Directory to save the generated images"
+          description: SAVE_DIR_DESCRIPTION
         },
         fileName: {
           type: "string",
@@ -429,7 +432,7 @@ export const tools: Tool[] = [
         },
         saveDir: {
           type: "string",
-          description: "Directory to save the generated images"
+          description: SAVE_DIR_DESCRIPTION
         },
         fileName: {
           type: "string",

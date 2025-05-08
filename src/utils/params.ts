@@ -62,41 +62,56 @@ export function normalizeSize(size?: string): string {
 }
 
 /**
- * Resolve a save directory relative to the project root, create if needed,
- * and ensure it's a valid writable location.
- * 
- * @param saveDir User-provided save directory
+ * Resolve a save directory relative to the current working directory (CWD), 
+ * create if needed, and ensure it's a valid writable location.
+ *
+ * Relative paths are resolved from the CWD where the server process was started.
+ *
+ * @param saveDir User-provided save directory (relative or absolute)
  * @returns Absolute path to the save directory
  */
 export function resolveSaveDir(saveDir?: string): string {
-  const baseDir = process.cwd();
-  let resolvedPath;
-  
+  // Use the Current Working Directory as the base for relative paths
+  const baseDir = process.cwd(); 
+  console.log(`Resolving saveDir: Input='${saveDir}', BaseDir (CWD)='${baseDir}'`);
+
+  let resolvedPath: string;
+
   if (!saveDir) {
+    // Default to CWD if no saveDir is provided
     resolvedPath = baseDir;
+    console.log(`saveDir not provided, defaulting to CWD: ${resolvedPath}`);
   } else {
-    // Resolve relative to current working directory if not absolute
-    resolvedPath = path.isAbsolute(saveDir) ? saveDir : path.resolve(baseDir, saveDir);
+    // Resolve relative paths against CWD, keep absolute paths as is
+    if (path.isAbsolute(saveDir)) {
+      resolvedPath = saveDir;
+      console.log(`saveDir is absolute: ${resolvedPath}`);
+    } else {
+      resolvedPath = path.resolve(baseDir, saveDir);
+      console.log(`saveDir is relative, resolved against CWD: ${resolvedPath}`);
+    }
   }
-  
+
   // Create directory if it doesn't exist
   try {
     fs.ensureDirSync(resolvedPath);
   } catch (error) {
     console.error(`Failed to create directory ${resolvedPath}:`, error);
-    // Fall back to base directory if we can't create the requested one
-    console.warn(`Falling back to base directory ${baseDir}`);
-    return baseDir;
+    // Fall back to CWD if we can't create the requested one
+    console.warn(`Falling back to current working directory ${baseDir}`);
+    return baseDir; // Use CWD as fallback
   }
-  
+
   // Verify we have write access to the directory
   try {
     fs.accessSync(resolvedPath, fs.constants.W_OK);
   } catch (error) {
     console.error(`No write permission for directory ${resolvedPath}:`, error);
-    console.warn(`Falling back to base directory ${baseDir}`);
-    return baseDir;
+    // Fall back to CWD if no write access
+    console.warn(`Falling back to current working directory ${baseDir}`);
+    return baseDir; // Use CWD as fallback
   }
-  
+
+  console.log(`Resolved save directory successfully: ${resolvedPath}`);
   return resolvedPath;
 } 

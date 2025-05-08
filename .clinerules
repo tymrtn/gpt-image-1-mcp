@@ -1,0 +1,39 @@
+# GPT-Image-1 MCP Server Project Rules
+
+## API Configuration
+- The server requires an OpenAI API key to be set in the MCP settings file
+- API key validation works successfully (confirmed with validate_api_key tool)
+- OpenAI organization needs to be verified to use gpt-image-1 model
+
+## Current Issues
+- Initial 404 errors were resolved by correcting API endpoints:
+  - Now using `/images/generations` for image generation
+  - `/images/edits` for image editing and image-to-image transformation
+  
+- New errors encountered:
+  1. "Unknown parameter: 'response_format'" - The response_format parameter was removed from requests
+  2. "Your organization must be verified to use the model `gpt-image-1`" - API key passes validation but organization needs verification
+  3. "Buffer error: The first argument must be of type string or an instance of Buffer..." - API may be returning a different structure than expected
+
+- There may be issues with how the response data is parsed:
+  - Code is looking for image data in either item.b64_json or item.image fields
+  - The actual response may have a different structure or the fields have different names
+  - Enhanced logging was added to help diagnose the exact structure of the response
+
+## Tools Available
+- generate_image: Creates images from text prompts
+- edit_image: Edits existing images with text prompts
+- image_to_image: Uses an image as input with text prompts
+- multi_image_edit: Combines and edits multiple images
+- validate_api_key: Checks if the API key is valid
+
+## Testing Notes
+- The validate_api_key tool works correctly and confirms the API key is valid
+- Image generation tools currently fail with the errors mentioned above
+- The API structure for GPT-Image-1 appears to be different from traditional DALL-E API
+- When generating test images (e.g., using `generate_image`), specifying a relative `saveDir` may lead to ENOENT errors; use absolute paths or ensure the directory exists before generation.
+
+## Project Structure
+- Services: Core API interaction in `src/services/dalle-service.ts`
+- Tools: MCP tool definitions in `src/tools/index.ts`
+- Server: Main MCP server setup in `src/index.ts`
