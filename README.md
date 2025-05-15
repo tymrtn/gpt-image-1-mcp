@@ -47,7 +47,7 @@ Example usage with Cline:
 ```json
 {
   "prompt": "A tropical beach at sunset",
-  "saveDir": "/path/to/current/workspace"
+  "saveDir": "/full/path/to/current/workspace"
 }
 ```
 
@@ -132,7 +132,7 @@ Generate an image using GPT-Image-1 based on a text prompt.
 
 Parameters:
 - `prompt` (required): Text description of the desired image
-- `size` (optional): Size of the generated image: "1024x1024", "1792x1024", "1024x1792", or "auto" (default: "auto")
+- `size` (optional): Size of the generated image: "1024x1024", "1024x1536", "1536x1024", or "auto" (default: "auto")
 - `quality` (optional): Quality of the generated image: "high", "medium", "low", or "auto" (default: "auto")
 - `background` (optional): Background transparency: "transparent", "opaque", or "auto" (default: "auto")
 - `moderation` (optional): Content moderation level: "low" or "auto" (default: "auto")
@@ -167,7 +167,7 @@ Parameters:
 - `prompt` (required): Text description of the desired edits
 - `imagePath` (required): Path to the image to edit
 - `mask` (optional): Path to a mask image where the white areas will be edited and black areas will be preserved
-- `size` (optional): Size of the generated image: "1024x1024", "1792x1024", "1024x1792", or "auto" (default: "auto")
+- `size` (optional): Size of the generated image: "1024x1024", "1024x1536", "1536x1024", or "auto" (default: "auto")
 - `quality` (optional): Quality of the generated image: "high", "medium", "low", or "auto" (default: "auto")
 - `background` (optional): Background transparency: "transparent", "opaque", or "auto" (default: "auto")
 - `moderation` (optional): Content moderation level: "low" or "auto" (default: "auto")
@@ -200,7 +200,7 @@ Generate an image using an existing image as input with GPT-Image-1.
 Parameters:
 - `imagePath` (required): Path to the input image
 - `prompt` (required): Text description to guide the generation
-- `size` (optional): Size of the generated image: "1024x1024", "1792x1024", "1024x1792", or "auto" (default: "auto")
+- `size` (optional): Size of the generated image: "1024x1024", "1024x1536", "1536x1024", or "auto" (default: "auto")
 - `quality` (optional): Quality of the generated image: "high", "medium", "low", or "auto" (default: "auto")
 - `background` (optional): Background transparency: "transparent", "opaque", or "auto" (default: "auto")
 - `moderation` (optional): Content moderation level: "low" or "auto" (default: "auto")
@@ -233,7 +233,7 @@ Edit multiple images together using GPT-Image-1.
 Parameters:
 - `prompt` (required): Text description to guide the generation
 - `imagePaths` (required): Array of paths to the input images
-- `size` (optional): Size of the generated image: "1024x1024", "1792x1024", "1024x1792", or "auto" (default: "auto")
+- `size` (optional): Size of the generated image: "1024x1024", "1024x1536", "1536x1024", or "auto" (default: "auto")
 - `quality` (optional): Quality of the generated image: "high", "medium", "low", or "auto" (default: "auto")
 - `background` (optional): Background transparency: "transparent", "opaque", or "auto" (default: "auto")
 - `moderation` (optional): Content moderation level: "low" or "auto" (default: "auto")
@@ -310,3 +310,13 @@ MIT
 ## Acknowledgments
 
 This project is a fork of the original [DALL-E MCP Server](https://github.com/Garoth/dalle-mcp) created by [Garoth](https://github.com/Garoth), modified to work exclusively with GPT-Image-1 model.
+
+#### Size Normalization Notes
+
+- **Supported sizes:**
+  - `1024x1024`
+  - `1024x1536`
+  - `1536x1024`
+- If you request a size that is not supported, the server will automatically select the closest supported size. The selection prioritizes aspect ratio similarity, then area difference.
+- If the size string is not in the format `WIDTHxHEIGHT` (e.g., `"foo"`), the server will default to `auto`.
+- See `src/utils/params.ts` for the normalization logic. This ensures compatibility with the GPT-Image-1 API and helps avoid errors from unsupported size requests.
