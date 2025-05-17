@@ -39,7 +39,7 @@ export class DalleService {
       output_format?: string;
       output_compression?: number;
       n?: number;
-      saveDir?: string;
+      saveDirPath?: string;
       fileName?: string;
     } = {}
   ): Promise<ImageGenerationResult> {
@@ -48,15 +48,24 @@ export class DalleService {
       // Set default options
       const model = 'gpt-image-1'; // Only support GPT-Image-1
       const n = options.n || 1;
-      const saveDir = resolveSaveDir(options.saveDir);
+      const saveDir = resolveSaveDir(options.saveDirPath);
       const fileName = options.fileName || `gpt-image-${Date.now()}`;
       const output_format = options.output_format || 'png';
 
       // Print debug information
       console.log("DEBUG - generateImage options:", JSON.stringify(options, null, 2));
 
-      // Ensure save directory exists
-      await fs.ensureDir(saveDir);
+      // Ensure save directory exists and is writeable
+      try {
+        await fs.ensureDir(saveDir); // Create if it doesn't exist
+        await fs.access(saveDir, fs.constants.W_OK); // Check for write permissions
+      } catch (err: any) {
+        console.error(`Error ensuring directory ${saveDir} is writeable:`, err);
+        return {
+          success: false,
+          error: `Save directory (${saveDir}) is not writeable or could not be created: ${err.message}`
+        };
+      }
 
       // Base request parameters
       const requestParams: any = {
@@ -237,7 +246,7 @@ export class DalleService {
       output_format?: string;
       output_compression?: number;
       n?: number;
-      saveDir?: string;
+      saveDirPath?: string;
       fileName?: string;
     } = {}
   ): Promise<ImageGenerationResult> {
@@ -251,11 +260,20 @@ export class DalleService {
       const output_format = options.output_format || 'png';
       const output_compression = options.output_compression || 100;
       const n = options.n || 1;
-      const saveDir = resolveSaveDir(options.saveDir);
+      const saveDir = resolveSaveDir(options.saveDirPath);
       const fileName = options.fileName || `gpt-image-edit-${Date.now()}`;
 
-      // Ensure save directory exists
-      await fs.ensureDir(saveDir);
+      // Ensure save directory exists and is writeable
+      try {
+        await fs.ensureDir(saveDir); // Create if it doesn't exist
+        await fs.access(saveDir, fs.constants.W_OK); // Check for write permissions
+      } catch (err: any) {
+        console.error(`Error ensuring directory ${saveDir} is writeable:`, err);
+        return {
+          success: false,
+          error: `Save directory (${saveDir}) is not writeable or could not be created: ${err.message}`
+        };
+      }
 
       // Check if image exists
       if (!await fs.pathExists(imagePath)) {
@@ -457,7 +475,7 @@ export class DalleService {
       output_format?: string;
       output_compression?: number;
       n?: number;
-      saveDir?: string;
+      saveDirPath?: string;
       fileName?: string;
     } = {}
   ): Promise<ImageGenerationResult> {
@@ -471,11 +489,20 @@ export class DalleService {
       const output_format = options.output_format || 'png';
       const output_compression = options.output_compression || 100;
       const n = options.n || 1;
-      const saveDir = resolveSaveDir(options.saveDir);
+      const saveDir = resolveSaveDir(options.saveDirPath);
       const fileName = options.fileName || `gpt-img2img-${Date.now()}`;
 
-      // Ensure save directory exists
-      await fs.ensureDir(saveDir);
+      // Ensure save directory exists and is writeable
+      try {
+        await fs.ensureDir(saveDir); // Create if it doesn't exist
+        await fs.access(saveDir, fs.constants.W_OK); // Check for write permissions
+      } catch (err: any) {
+        console.error(`Error ensuring directory ${saveDir} is writeable:`, err);
+        return {
+          success: false,
+          error: `Save directory (${saveDir}) is not writeable or could not be created: ${err.message}`
+        };
+      }
 
       // Check if image exists
       if (!await fs.pathExists(imagePath)) {
@@ -594,7 +621,7 @@ export class DalleService {
       output_format?: string;
       output_compression?: number;
       n?: number;
-      saveDir?: string;
+      saveDirPath?: string;
       fileName?: string;
     } = {}
   ): Promise<ImageGenerationResult> {
@@ -608,11 +635,20 @@ export class DalleService {
       const output_format = options.output_format || 'png';
       const output_compression = options.output_compression || 100;
       const n = options.n || 1;
-      const saveDir = resolveSaveDir(options.saveDir);
+      const saveDir = resolveSaveDir(options.saveDirPath);
       const fileName = options.fileName || `image-edit-${Date.now()}`;
 
-      // Ensure save directory exists
-      await fs.ensureDir(saveDir);
+      // Ensure save directory exists and is writeable
+      try {
+        await fs.ensureDir(saveDir); // Create if it doesn't exist
+        await fs.access(saveDir, fs.constants.W_OK); // Check for write permissions
+      } catch (err: any) {
+        console.error(`Error ensuring directory ${saveDir} is writeable:`, err);
+        return {
+          success: false,
+          error: `Save directory (${saveDir}) is not writeable or could not be created: ${err.message}`
+        };
+      }
 
       // Check if all images exist
       for (const imagePath of imagePaths) {

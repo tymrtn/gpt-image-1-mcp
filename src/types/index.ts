@@ -17,7 +17,7 @@ export interface GenerateImageArgs {
   output_format?: string;
   output_compression?: number;
   n?: number;
-  saveDir?: string;
+  saveDirPath?: string;
   fileName?: string;
 }
 
@@ -32,7 +32,7 @@ export interface EditImageArgs {
   output_format?: string;
   output_compression?: number;
   n?: number;
-  saveDir?: string;
+  saveDirPath?: string;
   fileName?: string;
 }
 
@@ -46,7 +46,7 @@ export interface ImageToImageArgs {
   output_format?: string;
   output_compression?: number;
   n?: number;
-  saveDir?: string;
+  saveDirPath?: string;
   fileName?: string;
 }
 
@@ -104,6 +104,6 @@ export interface MultiImageEditArgs {
   output_format?: string;
   output_compression?: number;
   n?: number;
-  saveDir?: string;
+  saveDirPath?: string;
   fileName?: string;
 }

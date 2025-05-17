@@ -18,12 +18,11 @@
   - output_format: "png", "jpeg", "webp" (default: "png")
   - output_compression: 0-100 (default: 100) for webp/jpeg
   - n: 1-10 (default: 1)
-  - saveDir: Directory to save images. 
-    - Supports absolute paths (e.g., `/Users/me/project/images`) and paths relative to the directory where the server process is started (Current Working Directory - CWD, e.g., `output/images`).
-    - Defaults to CWD if unspecified.
-    - Falls back to CWD if the specified directory cannot be created or written to.
-    - **Important:** To ensure images are always saved to the *same* location regardless of where the server is started, **you MUST provide the full, absolute system path.** Relative paths depend on the server's runtime CWD.
-    - Directories are automatically created if they don't exist.
+  - saveDirPath: Directory path to save images.
+    - **MUST be an absolute path** (e.g., `/Users/me/project/images`).
+    - Defaults to the server's Current Working Directory (CWD) if unspecified, however, using absolute paths is **strongly recommended** to ensure images are always saved to the *same* location regardless of where the server is started. Relative paths depend on the server's runtime CWD.
+    - The server attempts to create the directory if it doesn't exist.
+    - A writeability check is performed on this path *before* image generation. If the path is not writeable or cannot be created, an error is returned.
   - fileName: Base filename (default: "gpt-image-{timestamp}")
 
 ## GPT-Image-1 vs DALL-E 3 Differences

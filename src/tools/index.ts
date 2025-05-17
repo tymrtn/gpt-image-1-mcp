@@ -11,7 +11,7 @@ import {
 } from '../types/index.js';
 
 // Consistent saveDir description
-const SAVE_DIR_DESCRIPTION = "Directory to save images. Supports absolute paths (e.g., /Users/me/images) and paths relative to the server's Current Working Directory (CWD). Defaults to CWD if unspecified. **Important:** For consistent locations, use absolute paths.";
+const SAVE_DIR_PATH_DESCRIPTION = "Full system path to save images. **MUST be an absolute path** (e.g., /Users/me/project/images). If the path is not writeable or cannot be created, an error is returned.";
 
 // Initialize service
 const dalleService = new DalleService({
@@ -39,7 +39,7 @@ export const tools: Tool[] = [
         size: {
           type: "string",
           description: "Size of the generated image",
-          enum: ["1024x1024", "1792x1024", "1024x1792", "auto"]
+          enum: ["1024x1024", "1536x1024", "1024x1536", "auto"]
         },
         quality: {
           type: "string",
@@ -73,9 +73,9 @@ export const tools: Tool[] = [
           minimum: 1,
           maximum: 10
         },
-        saveDir: {
+        saveDirPath: {
           type: "string",
-          description: SAVE_DIR_DESCRIPTION
+          description: SAVE_DIR_PATH_DESCRIPTION
         },
         fileName: {
           type: "string",
@@ -98,7 +98,7 @@ export const tools: Tool[] = [
         output_format: args.output_format,
         output_compression: args.output_compression,
         n: args.n,
-        saveDir: args.saveDir,
+        saveDirPath: args.saveDirPath,
         fileName: args.fileName
       });
 
@@ -168,7 +168,7 @@ export const tools: Tool[] = [
         size: {
           type: "string",
           description: "Size of the generated image",
-          enum: ["1024x1024", "1792x1024", "1024x1536", "auto"]
+          enum: ["1024x1024", "1536x1024", "1024x1536", "auto"]
         },
         quality: {
           type: "string",
@@ -202,9 +202,9 @@ export const tools: Tool[] = [
           minimum: 1,
           maximum: 10
         },
-        saveDir: {
+        saveDirPath: {
           type: "string",
-          description: SAVE_DIR_DESCRIPTION
+          description: SAVE_DIR_PATH_DESCRIPTION
         },
         fileName: {
           type: "string",
@@ -227,7 +227,7 @@ export const tools: Tool[] = [
         output_format: args.output_format,
         output_compression: args.output_compression,
         n: args.n,
-        saveDir: args.saveDir,
+        saveDirPath: args.saveDirPath,
         fileName: args.fileName
       });
 
@@ -274,7 +274,7 @@ export const tools: Tool[] = [
         size: {
           type: "string",
           description: "Size of the generated image",
-          enum: ["1024x1024", "1792x1024", "1024x1792", "auto"]
+          enum: ["1024x1024", "1536x1024", "1024x1536", "auto"]
         },
         quality: {
           type: "string",
@@ -308,9 +308,9 @@ export const tools: Tool[] = [
           minimum: 1,
           maximum: 10
         },
-        saveDir: {
+        saveDirPath: {
           type: "string",
-          description: SAVE_DIR_DESCRIPTION
+          description: SAVE_DIR_PATH_DESCRIPTION
         },
         fileName: {
           type: "string",
@@ -328,7 +328,7 @@ export const tools: Tool[] = [
         output_format: args.output_format,
         output_compression: args.output_compression,
         n: args.n,
-        saveDir: args.saveDir,
+        saveDirPath: args.saveDirPath,
         fileName: args.fileName
       });
 
@@ -396,7 +396,7 @@ export const tools: Tool[] = [
         size: {
           type: "string",
           description: "Size of the generated image",
-          enum: ["1024x1024", "1792x1024", "1024x1792", "auto"]
+          enum: ["1024x1024", "1536x1024", "1024x1536", "auto"]
         },
         quality: {
           type: "string",
@@ -430,9 +430,9 @@ export const tools: Tool[] = [
           minimum: 1,
           maximum: 10
         },
-        saveDir: {
+        saveDirPath: {
           type: "string",
-          description: SAVE_DIR_DESCRIPTION
+          description: SAVE_DIR_PATH_DESCRIPTION
         },
         fileName: {
           type: "string",
@@ -462,7 +462,7 @@ export const tools: Tool[] = [
         output_format: args.output_format,
         output_compression: args.output_compression,
         n: args.n,
-        saveDir: args.saveDir,
+        saveDirPath: args.saveDirPath,
         fileName: args.fileName
       });
 
