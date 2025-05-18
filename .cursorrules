@@ -29,7 +29,7 @@
 - GPT-Image-1 is more realistic and consistent but may be less creative/fantastical than DALL-E 3
 - GPT-Image-1 supports transparency (PNG with transparent backgrounds)
 - GPT-Image-1 handles multi-image inputs natively
-- GPT-Image-1 has different size options (1024x1024, 1792x1024, 1024x1792)
+- GPT-Image-1 has different size options (1024x1024, 1536x1024, 1536)
 - GPT-Image-1 doesn't have the "style" parameter that DALL-E 3 had ("vivid" or "natural")
 - GPT-Image-1 has more output formats (png, jpeg, webp) with compression options
 
