@@ -1,4 +1,7 @@
 import path from 'path';
+import os from 'os';
+import fs from 'fs/promises';
+import sharp from 'sharp';
 import { DalleService } from '../services/dalle-service.js';
 import {
   GenerateImageArgs,
@@ -377,7 +380,7 @@ export const tools: Tool[] = [
   },
   {
     name: "edit_image",
-    description: "Edit an existing image using GPT-Image-1 based on a text prompt",
+    description: "Edit an existing image using GPT-Image-1 based on a text prompt. Can accept a mask image path or an array of geometric shapes to define the editable area.",
     inputSchema: {
       type: "object",
       properties: {
@@ -391,7 +394,32 @@ export const tools: Tool[] = [
         },
         mask: {
           type: "string",
-          description: "Optional path to a mask image where the white areas will be edited and black areas will be preserved"
+          description: "Optional path to a mask image (PNG format where white areas are edited, black areas preserved). Mutually exclusive with 'mask_shapes'."
+        },
+        mask_coordinate_system_description: {
+          type: "string",
+          description: "Optional textual guidance for an LLM on how to generate 'mask_shapes'. Example: 'Provide shapes with normalized coordinates (0.0-1.0 for x and y, origin top-left). Supported shapes: rectangle {x, y, width, height}, circle {cx, cy, radius}, polygon {points: [[x,y],...]}. All coordinates and dimensions are normalized relative to image size.'"
+        },
+        mask_shapes: {
+          type: "array",
+          description: "Optional array of shape objects to define the mask. Coordinates and dimensions must be normalized (0.0 to 1.0, origin top-left). Mutually exclusive with 'mask' (image file path).",
+          items: {
+            type: "object",
+            properties: {
+              type: {
+                type: "string",
+                enum: ["rectangle", "circle", "polygon"],
+                description: "Type of shape."
+              },
+              details: {
+                type: "object",
+                description: "Shape-specific details. For rectangle: {x, y, width, height}. For circle: {cx, cy, radius}. For polygon: {points: [[x1,y1], [x2,y2], ...]}.",
+                // Additional properties for specific shapes can be validated if needed,
+                // but for flexibility, keeping it as a generic object.
+              }
+            },
+            required: ["type", "details"]
+          }
         },
         size: {
           type: "string",
@@ -441,76 +469,141 @@ export const tools: Tool[] = [
       },
       required: ["prompt", "imagePath"]
     },
-    handler: async (args: EditImageArgs): Promise<ToolResponse> => {
+    handler: async (args: EditImageArgs & { mask_shapes?: any[], mask_coordinate_system_description?: string }): Promise<ToolResponse> => {
       // Resolve relative paths to absolute paths
-      const imagePath = path.isAbsolute(args.imagePath) 
-        ? args.imagePath 
+      const imagePathAbs = path.isAbsolute(args.imagePath)
+        ? args.imagePath
         : path.resolve(process.cwd(), args.imagePath);
-      
-      const maskPath = args.mask 
-        ? path.isAbsolute(args.mask) 
-          ? args.mask 
-          : path.resolve(process.cwd(), args.mask)
-        : undefined;
 
-      const result = await dalleService.editImage(args.prompt, imagePath, {
-        mask: maskPath,
-        size: args.size,
-        quality: args.quality,
-        background: args.background,
-        moderation: args.moderation,
-        output_format: args.output_format,
-        output_compression: args.output_compression,
-        n: args.n,
-        saveDirPath: args.saveDirPath,
-        fileName: args.fileName
-      });
+      let maskPathToUse: string | undefined = undefined;
+      let tempMaskPath: string | undefined = undefined;
 
-      if (!result.success) {
+      if (args.mask && args.mask_shapes && args.mask_shapes.length > 0) {
         return {
           content: [{
             type: "text",
-            text: `Error editing image: ${result.error}`
+            text: "Error: 'mask' (image path) and 'mask_shapes' (geometric shapes) are mutually exclusive. Provide one or the other, not both."
           }]
         };
       }
 
-      const imagePaths = result.imagePaths || [];
-      const imageCount = imagePaths.length;
-      const model = 'gpt-image-1';
+      try {
+        if (args.mask_shapes && args.mask_shapes.length > 0) {
+          const imageMetadata = await sharp(imagePathAbs).metadata();
+          if (!imageMetadata.width || !imageMetadata.height) {
+            throw new Error('Could not read image dimensions.');
+          }
+          const { width: imgWidth, height: imgHeight } = imageMetadata;
 
-      let responseText = `Successfully edited ${imageCount} image${imageCount !== 1 ? 's' : ''} using ${model}.\n\n`;
-      responseText += `Original image: ${imagePath}\n`;
-      if (maskPath) {
-        responseText += `Mask image: ${maskPath}\n`;
-      }
-      responseText += `Prompt: "${result.prompt}"\n\n`;
-      
-      // Add token usage if available
-      if (result.usage) {
-        responseText += `Token usage:\n`;
-        responseText += `- Total tokens: ${result.usage.total_tokens}\n`;
-        responseText += `- Input tokens: ${result.usage.input_tokens}\n`;
-        responseText += `- Output tokens: ${result.usage.output_tokens}\n`;
-        if (result.usage.input_tokens_details) {
-          responseText += `- Text tokens: ${result.usage.input_tokens_details.text_tokens}\n`;
-          responseText += `- Image tokens: ${result.usage.input_tokens_details.image_tokens}\n`;
+          const shapesSvg = args.mask_shapes.map(shape => {
+            if (!shape.details) return '';
+            switch (shape.type) {
+              case 'rectangle':
+                if (typeof shape.details.x !== 'number' || typeof shape.details.y !== 'number' || typeof shape.details.width !== 'number' || typeof shape.details.height !== 'number') {
+                  console.warn('Skipping invalid rectangle shape:', shape); return '';
+                }
+                return `<rect x="${shape.details.x * imgWidth}" y="${shape.details.y * imgHeight}" width="${shape.details.width * imgWidth}" height="${shape.details.height * imgHeight}" fill="white" />`;
+              case 'circle':
+                 if (typeof shape.details.cx !== 'number' || typeof shape.details.cy !== 'number' || typeof shape.details.radius !== 'number') {
+                  console.warn('Skipping invalid circle shape:', shape); return '';
+                }
+                const radius = shape.details.radius * Math.min(imgWidth, imgHeight);
+                return `<circle cx="${shape.details.cx * imgWidth}" cy="${shape.details.cy * imgHeight}" r="${radius}" fill="white" />`;
+              case 'polygon':
+                if (!Array.isArray(shape.details.points) || shape.details.points.some((p: any) => !Array.isArray(p) || p.length !== 2 || typeof p[0] !== 'number' || typeof p[1] !== 'number')) {
+                   console.warn('Skipping invalid polygon shape:', shape); return '';
+                }
+                const pointsStr = shape.details.points.map((p: [number, number]) => `${p[0] * imgWidth},${p[1] * imgHeight}`).join(' ');
+                return `<polygon points="${pointsStr}" fill="white" />`;
+              default:
+                console.warn(`Unsupported shape type: ${shape.type}`);
+                return '';
+            }
+          }).join('');
+
+          const svgBuffer = Buffer.from(`<svg width="${imgWidth}" height="${imgHeight}"><rect width="100%" height="100%" fill="black"/>${shapesSvg}</svg>`);
+          
+          tempMaskPath = path.join(os.tmpdir(), `mask-${Date.now()}.png`);
+          await sharp(svgBuffer).png().toFile(tempMaskPath);
+          maskPathToUse = tempMaskPath;
+
+        } else if (args.mask) {
+          maskPathToUse = path.isAbsolute(args.mask)
+            ? args.mask
+            : path.resolve(process.cwd(), args.mask);
         }
-        responseText += `\n`;
-      }
       
-      responseText += `Edited image${imageCount !== 1 ? 's' : ''} saved to:\n`;
-      
-      imagePaths.forEach(imagePath => {
-        responseText += `- ${imagePath}\n`;
-      });
+        const result = await dalleService.editImage(args.prompt, imagePathAbs, {
+          mask: maskPathToUse,
+          size: args.size,
+          quality: args.quality,
+          background: args.background,
+          moderation: args.moderation,
+          output_format: args.output_format,
+          output_compression: args.output_compression,
+          n: args.n,
+          saveDirPath: args.saveDirPath,
+          fileName: args.fileName
+        });
 
-      return {
-        content: [{
-          type: "text",
-          text: responseText
-        }]
-      };
+        if (!result.success) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error editing image: ${result.error}`
+            }]
+          };
+        }
+
+        const imagePaths = result.imagePaths || [];
+        const imageCount = imagePaths.length;
+        const model = 'gpt-image-1';
+
+        let responseText = `Successfully edited ${imageCount} image${imageCount !== 1 ? 's' : ''} using ${model}.\n\n`;
+        responseText += `Original image: ${imagePathAbs}\n`;
+        if (maskPathToUse) {
+          if (tempMaskPath) {
+            responseText += `Mask generated from shapes.\n`;
+          } else {
+            responseText += `Mask image: ${maskPathToUse}\n`;
+          }
+        }
+        responseText += `Prompt: "${result.prompt}"\n\n`;
+        
+        // Add token usage if available
+        if (result.usage) {
+          responseText += `Token usage:\n`;
+          responseText += `- Total tokens: ${result.usage.total_tokens}\n`;
+          responseText += `- Input tokens: ${result.usage.input_tokens}\n`;
+          responseText += `- Output tokens: ${result.usage.output_tokens}\n`;
+          if (result.usage.input_tokens_details) {
+            responseText += `- Text tokens: ${result.usage.input_tokens_details.text_tokens}\n`;
+            responseText += `- Image tokens: ${result.usage.input_tokens_details.image_tokens}\n`;
+          }
+          responseText += `\n`;
+        }
+        
+        responseText += `Edited image${imageCount !== 1 ? 's' : ''} saved to:\n`;
+        
+        imagePaths.forEach(imagePath => {
+          responseText += `- ${imagePath}\n`;
+        });
+
+        return {
+          content: [{
+            type: "text",
+            text: responseText
+          }]
+        };
+      } finally {
+        if (tempMaskPath) {
+          try {
+            await fs.unlink(tempMaskPath);
+          } catch (unlinkError) {
+            console.error(`Error deleting temporary mask file ${tempMaskPath}:`, unlinkError);
+          }
+        }
+      }
     }
   },
   {
